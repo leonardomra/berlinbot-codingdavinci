@@ -1,0 +1,27 @@
+{
+  "name": "Start on Heroku: Node.js",
+  "description": "A barebones Node.js app using Express 4",
+  "repository": "https://github.com/heroku/node-js-getting-started",
+  "logo": "https://cdn.rawgit.com/heroku/node-js-getting-started/master/public/node.svg",
+  "keywords": ["node", "express", "heroku"],
+  "image": "heroku/nodejs",
+  "env": {
+    "APP_NAME": {
+      "description": "Copy App Name here",
+      "value": "Berlin Urban Bot"
+    },
+    "TELEGRAM_TOKEN": {
+      "description": "Telegram bot token",
+      "value": ""
+    },
+    "APIAI_ACCESS_TOKEN": {
+      "description": "Client access token for Api.ai",
+      "value": ""
+    },
+    "APIAI_LANG": {
+      "description": "Agent language",
+      "value": "en",
+      "required": false
+    }
+
+}
