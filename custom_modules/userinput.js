@@ -4,6 +4,9 @@
 
 const apiai = require('apiai');
 const app = apiai(process.env.DIALOGFLOW_TOKEN);
+const Bug = require('./mydebugger');
+const PoiDist = require('./poidist');
+const listOfPOIs = require('./../data/schools_coords');
 
 class UserInput {
 
@@ -33,6 +36,11 @@ class UserInput {
 		let self = this;
 		switch (self.whichKindOfMessage()) {
 			case 'location':
+				let pd = new PoiDist(listOfPOIs);
+				let list = pd.calculateDistance([self.message._location._latitude, self.message._location._longitude]);
+				self.processLocationMessage(list, function(reply) {
+					callback(reply);
+				});
 				break;
 			case 'text':
 				self.processTextMessage(self.message._text, function(reply) {
@@ -43,6 +51,22 @@ class UserInput {
 				// statements_def
 				break;
 		}
+	}
+
+	processLocationMessage(list, callback) {
+		let self = this;
+		let string = 'You are close to: \n';
+		list.forEach( function(address, index) {
+			string += '/' + index + ' ' + address + '\n';
+		});
+		let reply = {
+			text: string,
+			entities: [],
+			contexts: [],
+			intention: 'Identify Location',
+			bot: ''
+		};
+		callback(reply);
 	}
 
 	processTextMessage(_message, callback) {

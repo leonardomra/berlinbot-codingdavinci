@@ -2,7 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var neo4j = require('neo4j');
+const neo4j = require('neo4j');
+const Debug = require('debug');
 
 class NeoConnect {
 	constructor() {
@@ -16,17 +17,16 @@ class NeoConnect {
 	}
 
 	match(queryString, responseCallback) {
-		console.log(queryString);
+		Debug(queryString);
 		this.db.cypher({
 			query: queryString,
 			params: {},
 		}, function(err, response) {
 			if (err) {
 				//throw err;
-				console.log(err);
+				Debug(err);
 				responseCallback(null);
 			} else {
-				//console.log(response);
 				responseCallback(response);
 
 			}

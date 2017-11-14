@@ -2,6 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
+const Bug = require('./mydebugger');
+
 class BotOutput {
 
 	replyWithSimpleMessage(scope, message) {
@@ -84,6 +86,18 @@ class BotOutput {
 		}
 		scope.sendMessage(reply);
 	}
+
+	replyWithWelcomeMessage(scope) {
+		scope.runMenu({
+			message: 'Hi there!',
+			layout: 2,
+			resizeKeyboard: true,
+			'What is around me?': () => {}, //will be on first line
+			'/start': () => {}, //will be on first line
+			'/help': () => {}, //will be on second line
+		});
+	}
+
 }
 
 module.exports = BotOutput;

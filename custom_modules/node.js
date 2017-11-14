@@ -2,8 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var fs = require('fs');
-var NeoConnect = require('./neoconnect');
+const fs = require('fs');
+const NeoConnect = require('./neoconnect');
 
 class Node {
 
@@ -133,7 +133,10 @@ class Node {
 		'where id(person)=' + id + ' ' +
 		'return person';
 		this.neo.match(queryString, function(response) {
-			let _response = response[0].person.properties;
+			let _response = {};
+			if (response !== null) {
+				_response = response[0].person.properties;
+			}
 			return responseCallback(_response);
 		});
 	}
@@ -169,7 +172,6 @@ class Node {
 			response.forEach(function(person) {
 				_response.push(person['id(person)']);
 			});
-			//console.log(_response.length);
 			return responseCallback(_response);
 		});
 	}

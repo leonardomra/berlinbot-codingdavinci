@@ -3,6 +3,7 @@
 
 const distance = require('gps-distance');
 const fs = require('fs');
+const Bug = require('./mydebugger');
 
 module.exports = class POIDistance {
 
@@ -11,11 +12,13 @@ module.exports = class POIDistance {
 	}
 
 	calculateDistance(liveLocationCoord) {
+		let nearLocations = [];
 		for (var key in this._listOfPOIs) {
 			var result = distance(liveLocationCoord[0], liveLocationCoord[1], this._listOfPOIs[key][0], this._listOfPOIs[key][1]);
 			if (result < 0.5) {
-				console.log('Distance to ' + key + ' is ' + result);
+				nearLocations.push(key);
 			}
 		}
+		return nearLocations;
 	}
 };

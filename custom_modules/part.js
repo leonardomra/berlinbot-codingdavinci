@@ -14,6 +14,7 @@ const UserInput = require('./userinput');
 const Persons = require('./persons');
 const Node = require('./node');
 const BotOutput = require('./botoutput');
+const Bug = require('./mydebugger');
 
 /** Class representing a part of a story. */
 
@@ -40,9 +41,10 @@ class Part {
 		otherwise.grabReply = function (reply, scope) {
 			self.manageIntent(reply, scope);
 		};
+		var command = new CommandController();
+		command.out = self.out;
 		self.telegram.router
-			//.when(new TextCommand('ping', 'pingCommand'), new PingController())
-			//.when(new TextCommand('hello', 'helloCommand'), new PingController())
+			.when(new TextCommand('/start', 'welcomeCommand'), command)
 			.otherwise(otherwise);
 	}
 
@@ -53,12 +55,16 @@ class Part {
 	*/
 	manageIntent(reply, scope) {
 		let self = this;
+		Bug.msg(reply.intention);
 		switch (reply.intention) {
 			case 'Indentify Person':
 				self.indentifyPersonIntent(reply, scope);
 				break;
 			case 'Identify Option':
 				self.identifyOptionIntent(reply, scope);
+				break;
+			case 'Identify Location':
+				self.identifyLocationIntent(reply, scope);
 				break;
 			case 'Default Fallback Intent':
 				self.defaultFallbackIntent(reply, scope);
@@ -93,6 +99,16 @@ class Part {
 	}
 
 	/**
+	* Handle Default Fallback Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
+	identifyLocationIntent(reply, scope) {
+		let self = this;
+		self.out.replyWithSimpleMessage(scope, reply.text);
+	}
+
+	/**
 	* Handle Identify Option Intent
 	* @param {object} reply - reply from Dialogflow API.
 	* @param {object} scope - scope from Telegram API.
@@ -106,7 +122,6 @@ class Part {
 						var p = self.options[context.parameters.Option.Option];
 						if (Object.keys(self.options).length === 0) {
 							self.out.replyWithSimpleMessage(scope, 'Sorry, could you please ask you question again?');
-							//scope.sendMessage('Sorry, could you please ask you question again?');
 						} else {
 							try {
 								if (Object.keys(p.aggregates).length !== 0) {
@@ -116,8 +131,7 @@ class Part {
 									self.out.replyWithSimpleVictimStatement(scope, p);
 								}
 							} catch(e) {
-								// statements
-								console.log(e);
+								Bug.error(e);
 								self.out.replyWithPersonNotFound(scope);
 							}
 						}
@@ -148,19 +162,18 @@ class Part {
 			var people = new Persons();
 			people.loadPersonsWithMatchingString(string, function(o) {
 				if (o.length === 0) {
-					console.log('no person found :(');
+					Bug.msg('No person found :(');
 					self.options = {};
 					self.out.replyWithSimpleMessage(scope, 'Sorry! No ' + string + ' found.');
-					//scope.sendMessage('Sorry! No ' + string + '.');
 				} else if (o.length == 1) {
-					console.log('one person found!');
+					Bug.msg('1 person found :(');
 					self.options[0] = o[0];
 					setTimeout(function() { // dirty fix - wait for people to load completely
 						self.out.replyWithShortDescription(scope, o[0]);
 						self.out.replyWithStolpersteinYesNoMenu(scope, o[0]);
 					}, 500);
 				} else {
-					console.log('several people found!');
+					Bug.msg('Several people found!');
 					self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
 				}
 			});
@@ -172,6 +185,7 @@ module.exports = Part;
 
 /** Class for handling unpredicted messages coming from the Telegram API. */
 class OtherwiseController extends TelegramBaseController {
+
 	handle($) {
 		let self = this;
 		var userInput = new UserInput($, $._message);
@@ -181,20 +195,16 @@ class OtherwiseController extends TelegramBaseController {
 	}
 }
 
-/*
-class PingController extends TelegramBaseController {
-	pingHandler($) {
-		$.sendMessage('pong');
-	}
-	helloHandler($) {
-		$.sendMessage('hi!');
+/** Class for handling certain kinds of commands coming from the Telegram API. */
+class CommandController extends TelegramBaseController {
+
+	welcomeHandler($) {
+		this.out.replyWithWelcomeMessage($);
 	}
 
 	get routes() {
 		return {
-			'pingCommand': 'pingHandler',
-			'helloCommand': 'helloHandler',
+			'welcomeCommand': 'welcomeHandler',
 		};
 	}
 }
-*/

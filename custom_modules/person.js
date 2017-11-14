@@ -21,19 +21,23 @@ class Person extends Node {
 		self.kb = undefined;
 		self.isPersonLoaded = false;
 		self.getPerson(id, function(response) {
-			this.geburtsdatum = response.geburtsdatum;
-			this.instance = response.instance;
-			this.extra = response.extra;
-			this.vorname = response.vorname;
-			this.geburtsname = response.geburtsname;
-			this.nachname = response.nachname;
-			this.name = response.name;
-			this.kb = response.kb;
-			this.loadAggredates(id, function(aggregates) {
-				self.aggregates = aggregates;
-				self.isPersonLoaded = true;
+			if (Object.keys(response).length !== 0) {
+				this.geburtsdatum = response.geburtsdatum;
+				this.instance = response.instance;
+				this.extra = response.extra;
+				this.vorname = response.vorname;
+				this.geburtsname = response.geburtsname;
+				this.nachname = response.nachname;
+				this.name = response.name;
+				this.kb = response.kb;
+				this.loadAggredates(id, function(aggregates) {
+					self.aggregates = aggregates;
+					self.isPersonLoaded = true;
+					callback(self);
+				});
+			} else {
 				callback(self);
-			});
+			}
 		}.bind(self));
 	}
 
