@@ -4,6 +4,10 @@
 
 class BotOutput {
 
+	replyWithSimpleMessage(scope, message) {
+		scope.sendMessage(message);
+	}
+
 	replyWithPersonNotFound(scope) {
 		let reply = 'I\'m sorry. I don\'t know this person. Would you like me to request a research?';
 		scope.sendMessage(reply);

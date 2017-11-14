@@ -18,6 +18,7 @@
     "ejs": "2.5.6",
     "express": "4.15.2",
     "gps-distance": "0.0.4",
+    "jsdoc": "3.5.5",
     "neo4j": "2.0.0-RC2",
     "node-uuid": "1.4.8",
     "telegram-node-bot": "4.0.5"

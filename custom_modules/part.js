@@ -2,6 +2,11 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
+/**
+* Part module.
+* @module custom_modules/part
+*/
+
 const Telegram = require('telegram-node-bot');
 const TelegramBaseController = Telegram.TelegramBaseController;
 const TextCommand = Telegram.TextCommand;
@@ -10,11 +15,21 @@ const Persons = require('./persons');
 const Node = require('./node');
 const BotOutput = require('./botoutput');
 
+/** Class representing a part of a story. */
+
 class Part {
 
-	initTelegram() {
+	constructor() {
 		let self = this;
 		self.options = {};
+		self.out = new BotOutput();
+	}
+
+	/**
+	* Initialize Telegram Connection
+	*/
+	initTelegram() {
+		let self = this;
 		self.telegram = new Telegram.Telegram(process.env.TELEGRAM_TOKEN, {
 			workers: 1, // coment on production
 			webAdmin: {
@@ -23,15 +38,20 @@ class Part {
 		});
 		var otherwise = new OtherwiseController();
 		otherwise.grabReply = function (reply, scope) {
-			self.dissectReply(reply, scope);
+			self.manageIntent(reply, scope);
 		};
 		self.telegram.router
-			.when(new TextCommand('ping', 'pingCommand'), new PingController())
-			.when(new TextCommand('hello', 'helloCommand'), new PingController())
+			//.when(new TextCommand('ping', 'pingCommand'), new PingController())
+			//.when(new TextCommand('hello', 'helloCommand'), new PingController())
 			.otherwise(otherwise);
 	}
 
-	dissectReply(reply, scope) {
+	/**
+	* Manage Intents proviced by Dialogflow API
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
+	manageIntent(reply, scope) {
 		let self = this;
 		switch (reply.intention) {
 			case 'Indentify Person':
@@ -49,38 +69,56 @@ class Part {
 		}
 	}
 
+	/**
+	* Handle Undefined Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
 	undefinedIntent(reply, scope) {
-		scope.sendMessage(reply.bot);
+		let self = this;
+		self.out.replyWithSimpleMessage(scope, reply.bot);
+		//scope.sendMessage(reply.bot);
 	}
 
+	/**
+	* Handle Default Fallback Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
 	defaultFallbackIntent(reply, scope) {
+		let self = this;
 		//Node.getAllPersonsNames(function(response) {});
-		scope.sendMessage(reply.bot);
-
+		self.out.replyWithSimpleMessage(scope, reply.bot);
+		//scope.sendMessage(reply.bot);
 	}
 
+	/**
+	* Handle Identify Option Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
 	identifyOptionIntent(reply, scope) {
 		let self = this;
-		let out = new BotOutput();
 		if (!Array.isArray(reply.entities)) {
 			if (reply.contexts.length !== 0) {
 				reply.contexts.forEach( function(context) {
 					if (context.name === 'person-context') {
 						var p = self.options[context.parameters.Option.Option];
 						if (Object.keys(self.options).length === 0) {
-							scope.sendMessage('Sorry, could you please ask you question again?');
+							self.out.replyWithSimpleMessage(scope, 'Sorry, could you please ask you question again?');
+							//scope.sendMessage('Sorry, could you please ask you question again?');
 						} else {
 							try {
 								if (Object.keys(p.aggregates).length !== 0) {
-									out.replyWithShortDescription(scope, p);
-									out.replyWithStolpersteinYesNoMenu(scope, p);
+									self.out.replyWithShortDescription(scope, p);
+									self.out.replyWithStolpersteinYesNoMenu(scope, p);
 								} else {
-									out.replyWithSimpleVictimStatement(scope, p);
+									self.out.replyWithSimpleVictimStatement(scope, p);
 								}
 							} catch(e) {
 								// statements
 								console.log(e);
-								out.replyWithPersonNotFound(scope);
+								self.out.replyWithPersonNotFound(scope);
 							}
 						}
 					}
@@ -89,9 +127,13 @@ class Part {
 		}
 	}
 
+	/**
+	* Handle Indentify Person Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
 	indentifyPersonIntent(reply, scope) {
 		let self = this;
-		let out = new BotOutput();
 		if (!Array.isArray(reply.entities)) {
 			// is dict
 			var string = '';
@@ -108,17 +150,18 @@ class Part {
 				if (o.length === 0) {
 					console.log('no person found :(');
 					self.options = {};
-					scope.sendMessage('Sorry! No ' + string + '.');
+					self.out.replyWithSimpleMessage(scope, 'Sorry! No ' + string + ' found.');
+					//scope.sendMessage('Sorry! No ' + string + '.');
 				} else if (o.length == 1) {
 					console.log('one person found!');
 					self.options[0] = o[0];
 					setTimeout(function() { // dirty fix - wait for people to load completely
-						out.replyWithShortDescription(scope, o[0]);
-						out.replyWithStolpersteinYesNoMenu(scope, o[0]);
+						self.out.replyWithShortDescription(scope, o[0]);
+						self.out.replyWithStolpersteinYesNoMenu(scope, o[0]);
 					}, 500);
 				} else {
 					console.log('several people found!');
-					self.options = out.replyWithMultiplePeopleOptionList(scope, string, o);
+					self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
 				}
 			});
 		}
@@ -127,6 +170,18 @@ class Part {
 
 module.exports = Part;
 
+/** Class for handling unpredicted messages coming from the Telegram API. */
+class OtherwiseController extends TelegramBaseController {
+	handle($) {
+		let self = this;
+		var userInput = new UserInput($, $._message);
+		userInput.analyseMessage(function(reply) {
+			self.grabReply(reply, $);
+		});
+	}
+}
+
+/*
 class PingController extends TelegramBaseController {
 	pingHandler($) {
 		$.sendMessage('pong');
@@ -142,14 +197,4 @@ class PingController extends TelegramBaseController {
 		};
 	}
 }
-
-class OtherwiseController extends TelegramBaseController {
-	handle($) {
-		let self = this;
-		var userInput = new UserInput($, $._message);
-		userInput.analyseMessage(function(reply) {
-			self.grabReply(reply, $);
-		});
-	}
-}
-
+*/
