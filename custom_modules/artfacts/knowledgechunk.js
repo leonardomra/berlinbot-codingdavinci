@@ -2,8 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./node');
-var Entity = require('./knowledgeentity');
+var Node = require('./artfacts/node');
+var Entity = require('./artfacts/knowledgeentity');;
 
 class Subject extends Node {
 

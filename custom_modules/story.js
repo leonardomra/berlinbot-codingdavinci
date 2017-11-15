@@ -2,8 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const KnowledgeChunk = require('./knowledgechunk');
-const Persons = require('./persons');
+const KnowledgeChunk = require('./artfacts/knowledgechunk');;
+const Persons = require('./artfacts/neo/persons');
 
 class Story {
 

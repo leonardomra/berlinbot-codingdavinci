@@ -2,8 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const Node = require('./node');
-const Person = require('./person');
+const Node = require('./../node');
+const Person = require('./../neo/person');
 
 class Persons extends Node {
 

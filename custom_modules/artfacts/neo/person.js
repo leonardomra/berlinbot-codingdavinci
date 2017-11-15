@@ -2,7 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./node');
+var Node = require('./../node');
 var Event = require('./event');
 var Location = require('./location');
 

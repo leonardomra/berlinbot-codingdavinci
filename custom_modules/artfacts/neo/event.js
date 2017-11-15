@@ -2,7 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./artfacts/node');
+var Node = require('./../node');
 
 class Event extends Node {
 

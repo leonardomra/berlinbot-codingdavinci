@@ -3,7 +3,7 @@
 /* jshint node: true */
 
 const fs = require('fs');
-const NeoConnect = require('./neoconnect');
+const NeoConnect = require('./../artfacts/neoconnect');
 
 class Node {
 

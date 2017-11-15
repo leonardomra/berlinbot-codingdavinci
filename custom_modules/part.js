@@ -11,8 +11,8 @@ const Telegram = require('telegram-node-bot');
 const TelegramBaseController = Telegram.TelegramBaseController;
 const TextCommand = Telegram.TextCommand;
 const UserInput = require('./userinput');
-const Persons = require('./persons');
-const Node = require('./node');
+const Persons = require('./artfacts/neo/persons');
+const Node = require('./artfacts/node');
 const BotOutput = require('./botoutput');
 const Bug = require('./mydebugger');
 

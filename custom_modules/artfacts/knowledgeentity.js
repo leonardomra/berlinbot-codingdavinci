@@ -2,8 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./node');
-var Quantifier = require('./quantifier');
+var Node = require('./artfacts/node');
+var Quantifier = require('./artfacts/quantifier');;
 
 class Entity extends Node {
 
