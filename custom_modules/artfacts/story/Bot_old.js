@@ -21,62 +21,15 @@ class Bot {
 		self.storyFactIsLoaded = false;
 		self.storyActsAreLoaded = false;
 		self.projectId = '59faeeb23dcf640fb556b5e5';
-
-		self.stage = {};
-
-		let classes = {
-			'StoryFact': StoryFact,
-			'Actor': Actor,
-			'StoryAct': StoryAct
-		};
-
-		function handleIds(ids, className) {
-			ids.forEach( function(id) {
-				if (self.stage[className + 's'] === undefined) {
-					self.stage[className + 's'] = [];
-				}
-				var o = new classes[className]();
-				o.init();
-				o.instantiation = className;
-				o.loadSubjectWithID(id, function(subject) {
-					bug.artmsg(subject.label + '(' + subject.instantiation + ') loaded!');
-					//self.loadAggregatesForStoryFact(function(){});
-				});
-				self.stage[className + 's'].push(o);
-			});
-		}
-		for (let key in classes) {
-			self.node.getInstanceForProjectId(key, self.projectId, handleIds);
-		}
-	}
-
-
-
-
-	loadStoryFact(id) {
-		let self = this;
-		self.story = new StoryFact();
-		self.story.init();
-		self.story.allAggregatesLoaded = false;
-		self.story.loadSubjectWithID(id, function(result) {
-			bug.artmsg('story loaded!');
-			//self.loadAggregatesForStoryFact(function(){});
+		/*
+		self.node.getStoryFactIdForProjectId(self.projectId, function (result) {
+			self.loadStoryFact(result);
+		});
+		*/
+		self.node.getStoriesFactIdForProjectId(self.projectId, function (result) {
+			self.loadStoryFact(result);
 		});
 	}
-
-	loadActor(id) {
-		let self = this;
-		self.actor = new Actor();
-		self.actor.init();
-		self.actor.allAggregatesLoaded = false;
-		self.actor.loadSubjectWithID(id, function(result) {
-			bug.artmsg('actor loaded!');
-			//self.loadAggregatesForActor(function(){});
-		});
-	}
-
-
-
 
 	//*******************************************/
 	//
@@ -86,6 +39,15 @@ class Bot {
 
 
 
+	loadStoryFact(id) {
+		let self = this;
+		self.story = new StoryFact();
+		self.story.init();
+		self.story.allAggregatesLoaded = false;
+		self.story.loadSubjectWithID(id, function(result) {
+			self.loadAggregatesForStoryFact(function(){});
+		});
+	}
 
 
 	loadAggregatesForStoryFact(callback) {

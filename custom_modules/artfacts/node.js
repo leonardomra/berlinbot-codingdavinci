@@ -233,7 +233,8 @@ class Node {
 	//
 	//*******************************************/
 
-	getStoryFactIdForProjectId(id, responseCallback) {
+	/*
+	getStoryFactIdsForProjectId(id, responseCallback) {
 		if (id === undefined) {
 			return responseCallback('ERROR: no person id defined :(');
 		}
@@ -241,9 +242,11 @@ class Node {
 		'where project.project_id = \'' + id + '\' and q.type = \'instantiation\' and q.value = \'StoryFact\' ' +
 		'return n.chunk_id';
 		this.neo.match(queryString, function(response) {
-			let _response = '';
+			let _response = [];
 			if (response !== null) {
-				_response = response[0]['n.chunk_id'];
+				response.forEach( function(element) {
+					_response.push(element['n.chunk_id']);
+				});
 			}
 			return responseCallback(_response);
 		});
@@ -264,6 +267,25 @@ class Node {
 				});
 			}
 			return responseCallback(_response);
+		});
+	}
+	*/
+
+	getInstanceForProjectId(instance, proejctId, responseCallback) {
+		if (proejctId === undefined || instance === undefined) {
+			return responseCallback('ERROR: no instance or id defined :(');
+		}
+		let queryString = 'match (project:PROJECT)-->(n:KNOWLEDGE_CHUNK)-->(e:KNOWLEDGE_ENTITY)-->(q:QUANTIFIER) ' +
+		'where project.project_id = \'' + proejctId + '\' and q.type = \'instantiation\' and q.value = \'' + instance + '\' ' +
+		'return n.chunk_id';
+		this.neo.match(queryString, function(response) {
+			let _response = [];
+			if (response !== null) {
+				response.forEach( function(element) {
+					_response.push(element['n.chunk_id']);
+				});
+			}
+			return responseCallback(_response, instance);
 		});
 	}
 
