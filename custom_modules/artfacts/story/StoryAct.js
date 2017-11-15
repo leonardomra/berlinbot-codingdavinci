@@ -23,6 +23,12 @@ class StoryAct extends KnowledgeChunk {
 		self.isRawContentLoaded = object.isRawContentLoaded;
 		self.isKindLoaded = object.isKindLoaded;
 		self.areAllEntitiesLoaded = object.areAllEntitiesLoaded;
+		self.instantiation = object.instantiation;
+		self.time = object.time;
+		if (object.time !== undefined) {
+			var time = object.time.split(':');
+			self.encodedTime = new Date().setHours(time[0],time[1],0);
+		}
 	}
 }
 

@@ -2,6 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
+const bug = require('./../mydebugger');
 const neo4j = require('neo4j');
 const Debug = require('debug');
 
@@ -25,7 +26,7 @@ class NeoConnect {
 		}, function(err, response) {
 			if (err) {
 				//throw err;
-				Debug(err);
+				bug.error(err);
 				responseCallback(null);
 			} else {
 				responseCallback(response);

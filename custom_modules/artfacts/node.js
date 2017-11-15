@@ -249,6 +249,24 @@ class Node {
 		});
 	}
 
+	getActorIdsForProjectId(id, responseCallback) {
+		if (id === undefined) {
+			return responseCallback('ERROR: no person id defined :(');
+		}
+		let queryString = 'match (project:PROJECT)-->(n:KNOWLEDGE_CHUNK)-->(e:KNOWLEDGE_ENTITY)-->(q:QUANTIFIER) ' +
+		'where project.project_id = \'' + id + '\' and q.type = \'instantiation\' and q.value = \'Actor\' ' +
+		'return n.chunk_id';
+		this.neo.match(queryString, function(response) {
+			let _response = [];
+			if (response !== null) {
+				response.forEach( function(element) {
+					_response.push(element['n.chunk_id']);
+				});
+			}
+			return responseCallback(_response);
+		});
+	}
+
 }
 
 module.exports = Node;
