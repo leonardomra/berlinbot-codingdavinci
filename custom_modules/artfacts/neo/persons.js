@@ -7,6 +7,10 @@ const Person = require('./../neo/person');
 
 class Persons extends Node {
 
+	init() {
+		super.init();
+	}
+
 	loadPersonsWithMatchingString(string, callback) {
 		let self = this;
 		self.persons = [];
@@ -19,6 +23,7 @@ class Persons extends Node {
 			}
 			response.forEach( function(id, index) {
 				var p = new Person();
+				p.init();
 				self.persons.push(p);
 				p.loadPersonWithID(id, function(person) {
 					if (self.watchPersonsLoad()) callback(self.persons);

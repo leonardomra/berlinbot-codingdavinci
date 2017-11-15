@@ -7,7 +7,7 @@ const Bug = require('./mydebugger');
 
 module.exports = class POIDistance {
 
-	constructor(listOfPOIs) {
+	init(listOfPOIs) {
 		this._listOfPOIs = listOfPOIs;
 	}
 

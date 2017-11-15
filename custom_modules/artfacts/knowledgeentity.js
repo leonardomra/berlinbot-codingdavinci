@@ -2,10 +2,14 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./artfacts/node');
-var Quantifier = require('./artfacts/quantifier');;
+const Node = require('./node');
+const Quantifier = require('./quantifier');
 
 class Entity extends Node {
+
+	init() {
+		super.init();
+	}
 
 	setSubject(_subject){
 		let self = this;
@@ -42,6 +46,7 @@ class Entity extends Node {
 		self.callback = callback;
 		_quantifiers.forEach(function(quantifier) {
 			var qt = new Quantifier();
+			qt.init();
 			qt.setSubject(self.subject);
 			qt.setEntity(self);
 			qt.loadQuantifierWithID(quantifier.quantifier_id, function(response) {

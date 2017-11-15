@@ -8,6 +8,10 @@ var Location = require('./location');
 
 class Person extends Node {
 
+	init() {
+		super.init();
+	}
+
 	loadPersonWithID(id, callback) {
 		let self = this;
 		self.aggregates = {};
@@ -56,12 +60,14 @@ class Person extends Node {
 						let extra = node.aggregate.properties.extra;
 						let gps = node.aggregate.properties.gps;
 						var location = new Location();
+						location.init();
 						location.loadLocationWithReadyInfo(pos, extra, gps, instantiation, kb);
 						aggregates[node.rel] = location;
 						break;
 					case 'EVENT':
 						let date = node.aggregate.properties.date;
 						var event = new Event();
+						event.init();
 						event.loadEventWithReadyInfo(date, instantiation, kb);
 						aggregates[node.rel] = event;
 						break;

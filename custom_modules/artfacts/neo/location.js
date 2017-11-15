@@ -6,6 +6,10 @@ var Node = require('./../node');
 
 class Location extends Node {
 
+	init() {
+		super.init();
+	}
+
 	loadLocationWithID(id, callback) {
 		let self = this;
 		self.pos = undefined;

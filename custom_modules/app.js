@@ -2,18 +2,25 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const KnowledgeChunk = require('./artfacts/knowledgechunk');;
-const Persons = require('./artfacts/neo/persons');
+const Bug = require('./mydebugger');
+const Part = require('./part');
+const Bot = require('./artfacts/story/Bot');
 
-class Story {
+class App {
 
-	constructor() {
-		this.storyline = [];
+	init() {
+		
+
+		var story = new Bot();
+		story.init();
+
+		//var part = new Part();
+		//part.init();
 	}
 
 }
 
-module.exports = Story;
+module.exports = App;
 
 /*
 var kc = new KnowledgeChunk();

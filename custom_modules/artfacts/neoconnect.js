@@ -6,7 +6,8 @@ const neo4j = require('neo4j');
 const Debug = require('debug');
 
 class NeoConnect {
-	constructor() {
+
+	init() {
 		var path;
 		if (process.env.IS_REMOTE) {
 			path = process.env.ARTFACTS_REMOTE;

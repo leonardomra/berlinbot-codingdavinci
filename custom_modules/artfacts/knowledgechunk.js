@@ -2,19 +2,16 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./artfacts/node');
-var Entity = require('./artfacts/knowledgeentity');;
+const Node = require('./node');
+const Entity = require('./knowledgeentity');
+const bug = require('./../mydebugger');
 
 class Subject extends Node {
 
-	getInformationAboutSubject() {
+	init() {
+		super.init();
 		let self = this;
-		console.log('label: ' + self.label + '\n' + 'kind: ' + self.kind + '\n' + 'content: ' + self.content + '\n' + 'entities: ' + self.knowledgeEntities);
-	}
-
-	loadSubjectWithID(_chunkId, callback) {
-		let self = this;
-		self.chunkId = _chunkId;
+		self.chunkId = undefined;
 		self.label = undefined;
 		self.kind = undefined;
 		self.content= undefined;
@@ -28,6 +25,16 @@ class Subject extends Node {
 		self.isRawContentLoaded = false;
 		self.isKindLoaded = false;
 		self.areAllEntitiesLoaded = false;
+	}
+
+	getInformationAboutSubject() {
+		let self = this;
+		console.log('label: ' + self.label + '\n' + 'kind: ' + self.kind + '\n' + 'content: ' + self.content + '\n' + 'entities: ' + self.knowledgeEntities);
+	}
+
+	loadSubjectWithID(_chunkId, callback) {
+		let self = this;
+		self.chunkId = _chunkId;
 		self.getSubject(self.chunkId, function(response) {
 			this.label = response.label;
 			this.content = response.content;
@@ -50,8 +57,17 @@ class Subject extends Node {
 	loadPredicates(_entities, callback) {
 		let self = this;
 		self.callback = callback;
+		if (_entities.length === 0) {
+			self.areAllEntitiesLoaded = true;
+			if (self.isBasicSubjectLoaded) {
+				self.isCompleteSubjectLoaded = true;
+				self.callback(self);
+			}
+			return;
+		}
 		_entities.forEach(function(entity) {
 			var en = new Entity();
+			en.init();
 			en.setSubject = self;
 			en.loadEntityWithID(entity.entity_id, function(response) {
 				if (this.watchEntitiesLoad()) {
@@ -74,6 +90,7 @@ class Subject extends Node {
 			//console.log(':loading status: complete subject loaded!');
 		}
 		if (self.isBasicSubjectLoaded === true && self.isCompleteSubjectLoaded === true) {
+			//bug.artmsg('Subject is loaded!');
 			return true;
 		} else {
 			return false;

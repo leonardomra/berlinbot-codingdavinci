@@ -4,11 +4,13 @@
 
 const fs = require('fs');
 const NeoConnect = require('./../artfacts/neoconnect');
+const Bug = require('./../mydebugger');
 
 class Node {
 
-	constructor() {
+	init() {
 		this.neo = new NeoConnect();
+		this.neo.init();
 	}
 
 	//*******************************************/
@@ -43,7 +45,13 @@ class Node {
 		'where kc.chunk_id = \'' + chunkId + '\' and ke.is_subject = \'true\' and qt.type = \'' + kind + '\' ' +
 		'return qt.value';
 		this.neo.match(queryString, function(response) {
-			return responseCallback(response);
+			let _response;
+			try {
+				_response = response[0]['qt.value'];
+			} catch(e) {
+				//Bug.error(e);
+			}
+			return responseCallback(_response);
 		});
 	}
 
@@ -218,6 +226,29 @@ class Node {
 			});
 		}
 	}
+
+    //*******************************************/
+	//
+	// Project
+	//
+	//*******************************************/
+
+	getStoryFactIdForProjectId(id, responseCallback) {
+		if (id === undefined) {
+			return responseCallback('ERROR: no person id defined :(');
+		}
+		let queryString = 'match (project:PROJECT)-->(n:KNOWLEDGE_CHUNK)-->(e:KNOWLEDGE_ENTITY)-->(q:QUANTIFIER) ' +
+		'where project.project_id = \'' + id + '\' and q.type = \'instantiation\' and q.value = \'StoryFact\' ' +
+		'return n.chunk_id';
+		this.neo.match(queryString, function(response) {
+			let _response = '';
+			if (response !== null) {
+				_response = response[0]['n.chunk_id'];
+			}
+			return responseCallback(_response);
+		});
+	}
+
 }
 
 module.exports = Node;

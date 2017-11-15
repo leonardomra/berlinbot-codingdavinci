@@ -2,9 +2,13 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var Node = require('./artfacts/node');
+const Node = require('./node');
 
 class Quantifier extends Node {
+
+	init() {
+		super.init();
+	}
 
 	setSubject(_subject) {
 		let self = this;

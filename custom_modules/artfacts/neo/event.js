@@ -6,6 +6,10 @@ var Node = require('./../node');
 
 class Event extends Node {
 
+	init() {
+		super.init();
+	}
+
 	loadEventWithID(id, callback) {
 		let self = this;
 		self.date = undefined;

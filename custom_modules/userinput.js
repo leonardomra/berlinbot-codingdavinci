@@ -10,7 +10,7 @@ const listOfPOIs = require('./../data/schools_coords');
 
 class UserInput {
 
-	constructor(scope, message) {
+	init(scope, message) {
 		let self = this;
 		self.scope = scope;
 		self.message = message;
@@ -37,6 +37,7 @@ class UserInput {
 		switch (self.whichKindOfMessage()) {
 			case 'location':
 				let pd = new PoiDist(listOfPOIs);
+				pd.init(listOfPOIs);
 				let list = pd.calculateDistance([self.message._location._latitude, self.message._location._longitude]);
 				self.processLocationMessage(list, function(reply) {
 					callback(reply);

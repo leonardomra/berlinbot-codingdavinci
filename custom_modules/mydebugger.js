@@ -3,6 +3,7 @@
 
 const bug_msg = require('debug')('worker:msg');
 const bug_error = require('debug')('worker:error');
+const bug_artfacts_msg = require('debug')('worker:ARTFACT');
 const SupportsColor = require('supports-color');
 
 module.exports = {
@@ -24,5 +25,8 @@ module.exports = {
 	error: function(obj) {
 		//this.check();
 		return bug_error(obj);
+	},
+	artmsg: function(obj) {
+		return bug_artfacts_msg(obj);
 	}
 };

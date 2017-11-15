@@ -12,7 +12,7 @@ const TelegramBaseController = Telegram.TelegramBaseController;
 const TextCommand = Telegram.TextCommand;
 const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
-const Node = require('./artfacts/node');
+//const Node = require('./artfacts/node');
 const BotOutput = require('./botoutput');
 const Bug = require('./mydebugger');
 
@@ -20,17 +20,13 @@ const Bug = require('./mydebugger');
 
 class Part {
 
-	constructor() {
-		let self = this;
-		self.options = {};
-		self.out = new BotOutput();
-	}
-
 	/**
 	* Initialize Telegram Connection
 	*/
-	initTelegram() {
+	init() {
 		let self = this;
+		self.options = {};
+		self.out = new BotOutput();
 		self.telegram = new Telegram.Telegram(process.env.TELEGRAM_TOKEN, {
 			workers: 1, // coment on production
 			webAdmin: {
@@ -160,6 +156,7 @@ class Part {
 			});
 			string = string.trim();
 			var people = new Persons();
+			people.init();
 			people.loadPersonsWithMatchingString(string, function(o) {
 				if (o.length === 0) {
 					Bug.msg('No person found :(');
@@ -188,7 +185,8 @@ class OtherwiseController extends TelegramBaseController {
 
 	handle($) {
 		let self = this;
-		var userInput = new UserInput($, $._message);
+		var userInput = new UserInput();
+		userInput.init($, $._message);
 		userInput.analyseMessage(function(reply) {
 			self.grabReply(reply, $);
 		});
