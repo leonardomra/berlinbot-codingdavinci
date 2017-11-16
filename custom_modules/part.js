@@ -28,6 +28,7 @@ class Part {
 		self.bot = null;
 		self.options = {};
 		self.out = new BotOutput();
+		self.out.brain = self;
 		/*
 		self.telegram = new Telegram.Telegram(process.env.TELEGRAM_TOKEN, {
 			workers: 1, // coment on production
@@ -42,6 +43,7 @@ class Part {
 		};
 		var command = new CommandController();
 		command.out = self.out;
+		command.brain = self;
 		self.telegram.router
 			.when(new TextCommand('/start', 'welcomeCommand'), command)
 			.when(new TextCommand('/tour', 'takeTour'), command)
@@ -108,8 +110,7 @@ class Part {
 	*/
 	identifyTourIntent(reply, scope) {
 		let self = this;
-		//self.bot.library.
-		self.out.replyWithSimpleMessage(scope, reply.bot);
+		self.out.replyWithMenuTourMessage(scope, self.bot.library.Actor.objs);
 	}
 
 	/**
@@ -218,14 +219,15 @@ class CommandController extends TelegramBaseController {
 		this.out.replyWithWelcomeMessage($);
 	}
 
-	takeHandler($) {
-		this.out.replyWithTourMessage($);
+	takeTourHandler($) {
+		this.brain.identifyTourIntent(null, $);
+		//this.out.replyWithTourMessage($);
 	}
 
 	get routes() {
 		return {
 			'welcomeCommand': 'welcomeHandler',
-			'takeTour': 'takeHandler',
+			'takeTour': 'takeTourHandler',
 		};
 	}
 }

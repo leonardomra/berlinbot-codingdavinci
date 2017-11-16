@@ -99,8 +99,25 @@ class BotOutput {
 		});
 	}
 
-	replyWithTourMessage(scope) {
-		scope.sendMessage('cool!');
+	replyWithMenuTourMessage(scope, reply) {
+		let self = this;
+		let _menu = [];
+		reply.forEach( function(subject) {
+			console.log(subject.content);
+			_menu.push({
+				text: subject.content,
+				callback: (callbackQuery, message) => { //to your callback will be passed callbackQuery and response from method
+					self.brain.bot.startStory();
+					//self.brain.bot.startStory();
+				}
+			});
+		});
+		scope.runInlineMenu({
+			layout: 2, //some layouting here
+			method: 'sendMessage', //here you must pass the method name
+			params: ['I have the following tours for you! Please choose one!'], //here you must pass the parameters for that method
+			menu: _menu
+		});
 	}
 }
 

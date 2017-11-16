@@ -2,7 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const Bug = require('./custom_modules/mydebugger');
+const bug = require('./custom_modules/mydebugger');
 const App = require('./custom_modules/app');
 const Telegram = require('telegram-node-bot');
 
@@ -18,10 +18,3 @@ if (!telegram._workers) {
 	app.telegram = telegram;
 	app.init();
 }
-
-
-
-
-
-
-

@@ -11,6 +11,7 @@ const StoryFact = require('./StoryFact');
 const Actor = require('./Actor');
 const BotUser = require('./BotUser');
 
+
 class Bot {
 
 	wakeup() {
@@ -25,7 +26,7 @@ class Bot {
 			'StoryFact': {class: StoryFact, objs: []},
 			'StoryAct': {class: StoryAct, objs: []},
 			'BotUser': {class: BotUser, objs: []},
-			//'Actor': Actor,
+			'Actor': {class: Actor, objs: []},
 		};
 		self.moveToStage00();
 	}
@@ -60,8 +61,36 @@ class Bot {
 
 	moveToStage01() {
 		let self = this;
+		self.loadSubjectQuantifiersForFacts();
+	}
+
+	moveToStage02() {
+		let self = this;
 		self.brain.init();
 		self.brain.bot = self;
+	}
+
+
+	loadSubjectQuantifiersForFacts() {
+		let self = this;
+		function handleTimeQuantifer(fact) {
+			fact.time = undefined;
+			fact.timeIsLoaded = false;
+			fact.getSubjectQuantifier(fact.chunkId, 'time', function(response) {
+				fact.timeIsLoaded = true;
+				if (response !== undefined) {
+					fact.time = response;
+					fact.encodeTime();
+				}
+				if (self.watchTimeQuantifierLoad(self.library)) {
+					console.log('All times loaded!');
+					self.moveToStage02();
+				}
+			});
+		}
+		for (let key in self.library) {
+			self.library[key].objs.forEach(handleTimeQuantifer);
+		}
 	}
 
 	distributeFacts() {
@@ -97,6 +126,25 @@ class Bot {
 		});
 	}
 
+	//*******************************************/
+	//
+	// Watchers
+	//
+	//*******************************************/
+
+	watchTimeQuantifierLoad(lib) {
+		for (let key in lib) {
+			if (lib[key].objs.length !== 0) {
+				for (var i = lib[key].objs.length - 1; i >= 0; i--) {
+					if (!lib[key].objs[i].timeIsLoaded) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
 	watchLibraryLoad(lib) {
 		for (let key in lib) {
 			if (lib[key].objs.length !== 0) {
@@ -110,86 +158,15 @@ class Bot {
 		return true;
 	}
 
-
-
-
 	//*******************************************/
 	//
-	// DO NOT ENTER
+	// Manage Stories
 	//
 	//*******************************************/
 
-	//*******************************************/
-	//
-	// StoryFact
-	//
-	//*******************************************/
-
-
-
-/*
-
-	watchAggregatesForStoryFactLoad() {
+	sortStoryActs() {
 		let self = this;
-		for (var i = 0; i < self.story.aggregates.length; i++) {
-			if (self.story.aggregates[i].isCompleteSubjectLoaded === false || self.story.aggregates[i].isCompleteSubjectLoaded === undefined) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	watchSubjectQuantifierLoadForStoryFact() {
-		let self = this;
-		for (var i = 0; i < self.story.aggregates.length; i++) {
-			if (self.story.aggregates[i].subjectInstantiationIsLoaded === false ||
-				self.story.aggregates[i].subjectInstantiationIsLoaded === undefined ||
-				self.story.aggregates[i].subjectTimeIsLoaded === false ||
-				self.story.aggregates[i].subjectTimeIsLoaded === undefined) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	loadSubjectQuantifiersForStoryFact() {
-		let self = this;
-		self.story.aggregates.forEach( function(aggregate) {
-			aggregate.instantiation = undefined;
-			aggregate.time = undefined;
-			aggregate.subjectInstantiationIsLoaded = false;
-			self.story.getSubjectQuantifier(aggregate.chunkId, 'instantiation', function(response) {
-				aggregate.subjectInstantiationIsLoaded = true;
-				if (response !== undefined) {
-					aggregate.instantiation = response;
-				}
-				if (self.watchSubjectQuantifierLoadForStoryFact()) self.loadStoryActs();
-			});
-			aggregate.subjectTimeIsLoaded = false;
-			self.story.getSubjectQuantifier(aggregate.chunkId, 'time', function(response) {
-				aggregate.subjectTimeIsLoaded = true;
-				if (response !== undefined) {
-					aggregate.time = response;
-				}
-				if (self.watchSubjectQuantifierLoadForStoryFact()) self.loadStoryActs();
-			});
-		});
-	}
-
-
-	loadStoryActs() {
-		let self = this;
-		self.story.aggregates.forEach( function(aggregate) {
-			if (aggregate.instantiation !== undefined) {
-				var act = new StoryAct();
-				act.init();
-				act.loadActWithObject(aggregate);
-				self.story.storyActs.push(act);
-			}
-		});
-		self.story.storyActs = self.story.storyActs.sort(self.compareStoryActs);
-		self.storyActsAreLoaded = true;
-		self.getActorsIdsForProjectId();
+		self.library.StoryAct.objs = self.library.StoryAct.objs.sort(self.compareStoryActs);
 	}
 
 	compareStoryActs(a, b) {
@@ -201,102 +178,12 @@ class Bot {
 	}
 
 
-
-	getActorsIdsForProjectId() {
+	startStory() {
 		let self = this;
-		self.node.getActorIdsForProjectId(self.projectId, function (result) {
-			self.loadActors(result);
-		});
+		console.log('will start story');
+		self.sortStoryActs();
+		console.log(self.library.StoryAct.objs);
 	}
-
-	loadActors(ids) {
-		let self = this;
-		ids.forEach( function(id) {
-			self.actor = new Actor();
-			self.actor.init();
-			self.actor.allAggregatesLoaded = false;
-			self.actor.loadSubjectWithID(id, function(result) {
-				self.loadAggregatesForActor(function(){});
-			});
-		});
-	}
-
-	loadAggregatesForActor(callback) {
-		let self = this;
-		if (self.actor.aggregates.length === 0) {
-			self.actor.knowledgeEntities.forEach( function(entity) {
-				if (self.actor.knowledgeEntities.length !== 0) {
-					if (entity.quantifiers !== 0) {
-						entity.quantifiers.forEach( function(quantifier) {
-							if (quantifier.type === 'class') {
-								var aggregate = new KnowledgeChunk();
-								aggregate.init();
-								aggregate.loadSubjectWithID(quantifier.value, function(subject) {
-									if(self.watchAggregatesForActorLoad() === true && self.actor.allAggregatesLoaded === false) {
-										bug.artmsg('All aggregates for actor loaded!');
-										//self.storyFactIsLoaded = true;
-										self.actor.allAggregatesLoaded = true;
-										self.loadSubjectQuantifiersForActor();
-									}
-								});
-								self.actor.aggregates.push(aggregate);
-							}
-						});
-
-					}
-				}
-			});
-		}
-	}
-
-	watchAggregatesForActorLoad() {
-		let self = this;
-		for (var i = 0; i < self.actor.aggregates.length; i++) {
-			if (self.actor.aggregates[i].isCompleteSubjectLoaded === false || self.actor.aggregates[i].isCompleteSubjectLoaded === undefined) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	watchSubjectQuantifierLoadForActor() {
-		let self = this;
-		for (var i = 0; i < self.story.aggregates.length; i++) {
-			if (self.actor.aggregates[i].subjectInstantiationIsLoaded === false ||
-				self.actor.aggregates[i].subjectInstantiationIsLoaded === undefined ||
-				self.actor.aggregates[i].subjectTimeIsLoaded === false ||
-				self.actor.aggregates[i].subjectTimeIsLoaded === undefined) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	loadSubjectQuantifiersForActor() {
-		let self = this;
-		self.actor.aggregates.forEach( function(aggregate) {
-			aggregate.instantiation = undefined;
-			aggregate.time = undefined;
-			aggregate.subjectInstantiationIsLoaded = false;
-			self.actor.getSubjectQuantifier(aggregate.chunkId, 'instantiation', function(response) {
-				aggregate.subjectInstantiationIsLoaded = true;
-				if (response !== undefined) {
-					aggregate.instantiation = response;
-				}
-				if (self.watchSubjectQuantifierLoadForActor()) self.loadStoryActs();
-			});
-			aggregate.subjectTimeIsLoaded = false;
-			self.story.getSubjectQuantifier(aggregate.chunkId, 'time', function(response) {
-				aggregate.subjectTimeIsLoaded = true;
-				if (response !== undefined) {
-					aggregate.time = response;
-				}
-				if (self.watchSubjectQuantifierLoadForActor()) self.loadStoryActs();
-			});
-		});
-	}
-	*/
-
 }
 
 module.exports = Bot;
