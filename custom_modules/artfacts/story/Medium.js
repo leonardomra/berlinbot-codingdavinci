@@ -2,8 +2,6 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
-
 class Model {
 
 }

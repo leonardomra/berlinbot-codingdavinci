@@ -9,11 +9,10 @@ const Bot = require('./artfacts/story/Bot');
 class App {
 
 	init() {
-		
-
-		var story = new Bot();
-		story.init();
-
+		let self = this;
+		self.bot = new Bot();
+		self.bot.telegram = self.telegram;
+		self.bot.wakeup();
 		//var part = new Part();
 		//part.init();
 	}

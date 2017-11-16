@@ -3,80 +3,121 @@
 /* jshint node: true */
 
 const bug = require('./../../mydebugger');
-//const StoryAct = require('./StoryAct');
-//const BotUser = require('./BotUser');
+const Part = require('./../../part');
 const Node = require('./../node');
 const KnowledgeChunk = require('./../knowledgechunk');
 const StoryAct = require('./StoryAct');
 const StoryFact = require('./StoryFact');
 const Actor = require('./Actor');
+const BotUser = require('./BotUser');
 
 class Bot {
 
-	init() {
+	wakeup() {
 		bug.artmsg('Hit from StoryFact!');
 		let self = this;
+		self.brain = new Part();
+		self.brain.telegram = self.telegram;
 		self.node = new Node();
 		self.node.init();
-		self.storyFactIsLoaded = false;
-		self.storyActsAreLoaded = false;
 		self.projectId = '59faeeb23dcf640fb556b5e5';
-
-		self.stage = {};
-
-		let classes = {
-			'StoryFact': StoryFact,
-			'Actor': Actor,
-			'StoryAct': StoryAct
+		self.library = {
+			'StoryFact': {class: StoryFact, objs: []},
+			'StoryAct': {class: StoryAct, objs: []},
+			'BotUser': {class: BotUser, objs: []},
+			//'Actor': Actor,
 		};
+		self.moveToStage00();
+	}
 
+	moveToStage00() {
+		let self = this;
 		function handleIds(ids, className) {
 			ids.forEach( function(id) {
-				if (self.stage[className + 's'] === undefined) {
-					self.stage[className + 's'] = [];
-				}
-				var o = new classes[className]();
+				var o = new self.library[className].class();
 				o.init();
 				o.instantiation = className;
+				self.library[className].objs.push(o);
 				o.loadSubjectWithID(id, function(subject) {
-					bug.artmsg(subject.label + '(' + subject.instantiation + ') loaded!');
-					//self.loadAggregatesForStoryFact(function(){});
+					subject.factIsLoaded = true;
+					if (self.watchLibraryLoad(self.library)) {
+						console.log('finish loading!');
+						self.distributeFacts();
+					}
 				});
-				self.stage[className + 's'].push(o);
 			});
 		}
-		for (let key in classes) {
+		function calmLoading(key) {
+			console.log('will process ' + key + '...');
 			self.node.getInstanceForProjectId(key, self.projectId, handleIds);
+			multiplier++;
+		}
+		let multiplier = 0;
+		for (let key in self.library) {
+			calmLoading(key);
 		}
 	}
 
-
-
-
-	loadStoryFact(id) {
+	moveToStage01() {
 		let self = this;
-		self.story = new StoryFact();
-		self.story.init();
-		self.story.allAggregatesLoaded = false;
-		self.story.loadSubjectWithID(id, function(result) {
-			bug.artmsg('story loaded!');
-			//self.loadAggregatesForStoryFact(function(){});
+		self.brain.init();
+		self.brain.bot = self;
+	}
+
+	distributeFacts() {
+		let self = this;
+		function handleFact(fact) {
+			for (let key in self.library) {
+				let _key = key.charAt(0).toLowerCase()+ key.slice(1);
+				_key += 's';
+				if (fact.hasOwnProperty(_key)) {
+					self.compareLinksAndAddObjects(fact, self.library[key].objs, _key);
+				}
+			}
+		}
+		for (let key in self.library) {
+			self.library[key].objs.forEach(handleFact);
+		}
+		//console.log(self.library.StoryFact.objs[0]);
+		self.moveToStage01();
+	}
+
+
+	compareLinksAndAddObjects(subject, objects, _key) {
+		objects.forEach( function(object) {
+			subject.knowledgeEntities.forEach( function(entity) {
+				entity.quantifiers.forEach( function(quantifier) {
+					if (quantifier.type === 'class') {
+						if (object.chunkId === quantifier.value) {
+							subject[_key].push(object);
+						}
+					}
+				});
+			});
 		});
 	}
 
-	loadActor(id) {
-		let self = this;
-		self.actor = new Actor();
-		self.actor.init();
-		self.actor.allAggregatesLoaded = false;
-		self.actor.loadSubjectWithID(id, function(result) {
-			bug.artmsg('actor loaded!');
-			//self.loadAggregatesForActor(function(){});
-		});
+	watchLibraryLoad(lib) {
+		for (let key in lib) {
+			if (lib[key].objs.length !== 0) {
+				for (var i = lib[key].objs.length - 1; i >= 0; i--) {
+					if (!lib[key].objs[i].factIsLoaded) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 
 
+
+	//*******************************************/
+	//
+	// DO NOT ENTER
+	//
+	//*******************************************/
 
 	//*******************************************/
 	//
@@ -86,35 +127,7 @@ class Bot {
 
 
 
-
-
-	loadAggregatesForStoryFact(callback) {
-		let self = this;
-		if (self.story.aggregates.length === 0) {
-			self.story.knowledgeEntities.forEach( function(entity) {
-				if (self.story.knowledgeEntities.length !== 0) {
-					if (entity.quantifiers !== 0) {
-						entity.quantifiers.forEach( function(quantifier) {
-							if (quantifier.type === 'class') {
-								var aggregate = new KnowledgeChunk();
-								aggregate.init();
-								aggregate.loadSubjectWithID(quantifier.value, function(subject) {
-									if(self.watchAggregatesForStoryFactLoad() === true && self.story.allAggregatesLoaded === false) {
-										bug.artmsg('All aggregates for story loaded!');
-										self.storyFactIsLoaded = true;
-										self.story.allAggregatesLoaded = true;
-										self.loadSubjectQuantifiersForStoryFact();
-									}
-								});
-								self.story.aggregates.push(aggregate);
-							}
-						});
-
-					}
-				}
-			});
-		}
-	}
+/*
 
 	watchAggregatesForStoryFactLoad() {
 		let self = this;
@@ -163,11 +176,6 @@ class Bot {
 		});
 	}
 
-	//*******************************************/
-	//
-	// StoryAct
-	//
-	//*******************************************/
 
 	loadStoryActs() {
 		let self = this;
@@ -193,11 +201,6 @@ class Bot {
 	}
 
 
-	//*******************************************/
-	//
-	// Actor
-	//
-	//*******************************************/
 
 	getActorsIdsForProjectId() {
 		let self = this;
@@ -292,6 +295,7 @@ class Bot {
 			});
 		});
 	}
+	*/
 
 }
 

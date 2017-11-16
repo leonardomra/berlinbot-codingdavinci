@@ -2,12 +2,15 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const Bug = require('./../../mydebugger');
+const bug = require('./../../mydebugger');
+const KnowledgeChunk = require('./../knowledgechunk');
 
-class BotUser {
+class BotUser extends KnowledgeChunk {
 
 	init() {
-		Bug.artmsg('Hit from BotUser!');
+		super.init();
+		let self = this;
+		self.factIsLoaded = false;
 	}
 }
 

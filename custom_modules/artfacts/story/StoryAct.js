@@ -7,6 +7,12 @@ const KnowledgeChunk = require('./../knowledgechunk');
 
 class StoryAct extends KnowledgeChunk {
 
+	init() {
+		super.init();
+		let self = this;
+		self.factIsLoaded = false;
+	}
+
 	loadActWithObject(object) {
 		let self = this;
 		self.chunkId = object.chunkId;

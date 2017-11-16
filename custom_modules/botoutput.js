@@ -94,10 +94,14 @@ class BotOutput {
 			resizeKeyboard: true,
 			'What is around me?': () => {}, //will be on first line
 			'/start': () => {}, //will be on first line
+			'/tour': () => {}, //will be on first line
 			'/help': () => {}, //will be on second line
 		});
 	}
 
+	replyWithTourMessage(scope) {
+		scope.sendMessage('cool!');
+	}
 }
 
 module.exports = BotOutput;

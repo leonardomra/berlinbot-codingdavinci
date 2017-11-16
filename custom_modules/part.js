@@ -25,14 +25,17 @@ class Part {
 	*/
 	init() {
 		let self = this;
+		self.bot = null;
 		self.options = {};
 		self.out = new BotOutput();
+		/*
 		self.telegram = new Telegram.Telegram(process.env.TELEGRAM_TOKEN, {
 			workers: 1, // coment on production
 			webAdmin: {
 				port: process.env.PORT || 5000
 			}
 		});
+		*/
 		var otherwise = new OtherwiseController();
 		otherwise.grabReply = function (reply, scope) {
 			self.manageIntent(reply, scope);
@@ -41,6 +44,7 @@ class Part {
 		command.out = self.out;
 		self.telegram.router
 			.when(new TextCommand('/start', 'welcomeCommand'), command)
+			.when(new TextCommand('/tour', 'takeTour'), command)
 			.otherwise(otherwise);
 	}
 
@@ -61,6 +65,9 @@ class Part {
 				break;
 			case 'Identify Location':
 				self.identifyLocationIntent(reply, scope);
+				break;
+			case 'Identify Tour':
+				self.identifyTourIntent(reply, scope);
 				break;
 			case 'Default Fallback Intent':
 				self.defaultFallbackIntent(reply, scope);
@@ -95,7 +102,18 @@ class Part {
 	}
 
 	/**
-	* Handle Default Fallback Intent
+	* Handle Identify Tour Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
+	identifyTourIntent(reply, scope) {
+		let self = this;
+		//self.bot.library.
+		self.out.replyWithSimpleMessage(scope, reply.bot);
+	}
+
+	/**
+	* Handle Identify Location Intent
 	* @param {object} reply - reply from Dialogflow API.
 	* @param {object} scope - scope from Telegram API.
 	*/
@@ -200,9 +218,14 @@ class CommandController extends TelegramBaseController {
 		this.out.replyWithWelcomeMessage($);
 	}
 
+	takeHandler($) {
+		this.out.replyWithTourMessage($);
+	}
+
 	get routes() {
 		return {
 			'welcomeCommand': 'welcomeHandler',
+			'takeTour': 'takeHandler',
 		};
 	}
 }
