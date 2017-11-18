@@ -25,6 +25,10 @@ class Subject extends Node {
 		self.isRawContentLoaded = false;
 		self.isKindLoaded = false;
 		self.areAllEntitiesLoaded = false;
+		self.time = undefined;
+		self.timeIsLoaded = false;
+		self.extra = undefined;
+		self.extraIsLoaded = false;
 	}
 
 	getInformationAboutSubject() {
@@ -108,6 +112,14 @@ class Subject extends Node {
 			}
 		}
 		return true;
+	}
+
+	encodeTime() {
+		let self = this;
+		if (self.time !== undefined) {
+			var time = self.time.split(':');
+			self.encodedTime = new Date().setHours(time[0],time[1],0);
+		}
 	}
 }
 

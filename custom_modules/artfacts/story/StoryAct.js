@@ -2,7 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const Bug = require('./../../mydebugger');
+const bug = require('./../../mydebugger');
 const KnowledgeChunk = require('./../knowledgechunk');
 
 class StoryAct extends KnowledgeChunk {
@@ -11,6 +11,13 @@ class StoryAct extends KnowledgeChunk {
 		super.init();
 		let self = this;
 		self.factIsLoaded = false;
+		self.mainNarratives = [];
+		self.mainNarrativesAreLoaded = false;
+		self.pOIs = []; // strange formatting should be kept, computer is stupid
+		self.pOIsAreLoaded = false; // strange formatting should be kept, computer is stupid
+		self.actorSpeechs = []; // grammar mistake should be kept, computer is stupid
+		self.actorSpeechsAreLoaded = false; // grammar mistake should be kept, computer is stupid
+
 	}
 
 	loadActWithObject(object) {
@@ -37,6 +44,7 @@ class StoryAct extends KnowledgeChunk {
 		}
 	}
 
+	/*
 	encodeTime() {
 		let self = this;
 		if (self.time !== undefined) {
@@ -44,6 +52,7 @@ class StoryAct extends KnowledgeChunk {
 			self.encodedTime = new Date().setHours(time[0],time[1],0);
 		}
 	}
+	*/
 }
 
 module.exports = StoryAct;

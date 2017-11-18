@@ -3,7 +3,7 @@
 /* jshint node: true */
 
 /**
-* Part module.
+* Brain module.
 * @module custom_modules/part
 */
 
@@ -14,11 +14,11 @@ const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
 //const Node = require('./artfacts/node');
 const BotOutput = require('./botoutput');
-const Bug = require('./mydebugger');
+const bug = require('./mydebugger');
 
 /** Class representing a part of a story. */
 
-class Part {
+class Brain {
 
 	/**
 	* Initialize Telegram Connection
@@ -27,17 +27,15 @@ class Part {
 		let self = this;
 		self.bot = null;
 		self.options = {};
+		self.in = new UserInput();
+		self.in.brain = self;
 		self.out = new BotOutput();
 		self.out.brain = self;
-		/*
-		self.telegram = new Telegram.Telegram(process.env.TELEGRAM_TOKEN, {
-			workers: 1, // coment on production
-			webAdmin: {
-				port: process.env.PORT || 5000
-			}
-		});
-		*/
+		self.isStoryActive = false;
+		self.isLiveLocationActive = false;
+		self.locationReplyCounter = 0;
 		var otherwise = new OtherwiseController();
+		otherwise.in = self.in;
 		otherwise.grabReply = function (reply, scope) {
 			self.manageIntent(reply, scope);
 		};
@@ -57,7 +55,7 @@ class Part {
 	*/
 	manageIntent(reply, scope) {
 		let self = this;
-		Bug.msg(reply.intention);
+		bug.msg(reply.intention);
 		switch (reply.intention) {
 			case 'Indentify Person':
 				self.indentifyPersonIntent(reply, scope);
@@ -110,7 +108,7 @@ class Part {
 	*/
 	identifyTourIntent(reply, scope) {
 		let self = this;
-		self.out.replyWithMenuTourMessage(scope, self.bot.library.Actor.objs);
+		self.out.replyWithMenuTourMessage(scope, self.bot.library.MainActor.objs);
 	}
 
 	/**
@@ -120,6 +118,15 @@ class Part {
 	*/
 	identifyLocationIntent(reply, scope) {
 		let self = this;
+		self.isLiveLocationActive = true;
+		self.locationReplyCounter++;
+		if (self.timeOutLocationActive === undefined) {
+			self.timeOutLocationActive = setTimeout(function() {
+				bug.artmsg('isLiveLocationActive will be reset... ' + self.locationReplyCounter);
+				self.isLiveLocationActive = false;
+				self.timeOutLocationActive = undefined;
+			}, 120000);
+		}
 		self.out.replyWithSimpleMessage(scope, reply.text);
 	}
 
@@ -146,7 +153,7 @@ class Part {
 									self.out.replyWithSimpleVictimStatement(scope, p);
 								}
 							} catch(e) {
-								Bug.error(e);
+								bug.error(e);
 								self.out.replyWithPersonNotFound(scope);
 							}
 						}
@@ -178,18 +185,18 @@ class Part {
 			people.init();
 			people.loadPersonsWithMatchingString(string, function(o) {
 				if (o.length === 0) {
-					Bug.msg('No person found :(');
+					bug.msg('No person found :(');
 					self.options = {};
 					self.out.replyWithSimpleMessage(scope, 'Sorry! No ' + string + ' found.');
 				} else if (o.length == 1) {
-					Bug.msg('1 person found :(');
+					bug.msg('1 person found :(');
 					self.options[0] = o[0];
 					setTimeout(function() { // dirty fix - wait for people to load completely
 						self.out.replyWithShortDescription(scope, o[0]);
 						self.out.replyWithStolpersteinYesNoMenu(scope, o[0]);
 					}, 500);
 				} else {
-					Bug.msg('Several people found!');
+					bug.msg('Several people found!');
 					self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
 				}
 			});
@@ -197,16 +204,15 @@ class Part {
 	}
 }
 
-module.exports = Part;
+module.exports = Brain;
 
 /** Class for handling unpredicted messages coming from the Telegram API. */
 class OtherwiseController extends TelegramBaseController {
 
 	handle($) {
 		let self = this;
-		var userInput = new UserInput();
-		userInput.init($, $._message);
-		userInput.analyseMessage(function(reply) {
+		self.in.init($, $._message);
+		self.in.analyseMessage(function(reply) {
 			self.grabReply(reply, $);
 		});
 	}

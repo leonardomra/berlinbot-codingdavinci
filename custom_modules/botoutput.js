@@ -6,6 +6,10 @@ const Bug = require('./mydebugger');
 
 class BotOutput {
 
+	replyWithImage(scope, imageUrl) {
+		scope.sendPhoto({ url: imageUrl});
+	}
+
 	replyWithSimpleMessage(scope, message) {
 		scope.sendMessage(message);
 	}
@@ -107,7 +111,7 @@ class BotOutput {
 			_menu.push({
 				text: subject.content,
 				callback: (callbackQuery, message) => { //to your callback will be passed callbackQuery and response from method
-					self.brain.bot.startStory();
+					self.brain.bot.startStory(scope);
 					//self.brain.bot.startStory();
 				}
 			});

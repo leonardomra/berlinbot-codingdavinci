@@ -3,7 +3,6 @@
 /* jshint node: true */
 
 const Bug = require('./mydebugger');
-const Part = require('./part');
 const Bot = require('./artfacts/story/Bot');
 
 class App {
@@ -12,7 +11,10 @@ class App {
 		let self = this;
 		self.bot = new Bot();
 		self.bot.telegram = self.telegram;
-		self.bot.wakeup();
+		setTimeout(function() {
+			console.log('wake up ->>>');
+			self.bot.wakeup();
+		}, 3000);
 	}
 
 }

@@ -2,10 +2,17 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
+const bug = require('./../../mydebugger');
+const KnowledgeChunk = require('./../knowledgechunk');
 
-class Model {
+class MainActor extends KnowledgeChunk {
+
+	init() {
+		super.init();
+		let self = this;
+		self.factIsLoaded = false;
+	}
 
 }
 
-module.exports = Model;
+module.exports = MainActor;

@@ -2,10 +2,20 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
+const bug = require('./../../mydebugger');
+const KnowledgeChunk = require('./../knowledgechunk');
 
-class Model {
+class ActorSpeech extends KnowledgeChunk {
 
+	init() {
+		super.init();
+		let self = this;
+		self.factIsLoaded = false;
+		self.mediums = []; // grammar mistake should be kept, computer is stupid
+		self.mediumsAreLoaded = false; // grammar mistake should be kept, computer is stupid
+		self.actions = [];
+		self.actionsAreLoaded = false;
+	}
 }
 
-module.exports = Model;
+module.exports = ActorSpeech;
