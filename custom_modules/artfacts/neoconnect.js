@@ -4,37 +4,54 @@
 
 const bug = require('./../mydebugger');
 const neo4j = require('neo4j');
-const Debug = require('debug');
 
 class NeoConnect {
 
 	init() {
+		let self = this;
 		var path;
 		if (process.env.IS_REMOTE) {
 			path = process.env.ARTFACTS_REMOTE;
 		} else {
 			path = process.env.ARTFACTS_LOCAL;
 		}
-		this.db = new neo4j.GraphDatabase(path);
+		self.db = new neo4j.GraphDatabase(path);
 	}
 
 	match(queryString, responseCallback) {
-		Debug(queryString);
-		this.db.cypher({
-			query: queryString,
-			params: {},
-		}, function(err, response) {
-			if (err) {
-				//throw err;
-				bug.error(err);
-				responseCallback(null);
+		let self = this;
+		var tryCounter = 0;
+		function tryAgain() {
+			if (tryCounter < 100) {
+				console.log('will try again...' + tryCounter);
+				setTimeout(function() {
+					execute();
+				}, 5000);
 			} else {
-				responseCallback(response);
 
+				responseCallback(null);
 			}
-		});
+			tryCounter++;
+		}
+		function execute() {
+			self.db.cypher({
+				query: queryString,
+				params: {},
+			}, function(err, response) {
+				if (err) {
+					//throw err;
+					console.log('ERROR FROM NEO4J. Trying execute query ' + queryString);
+					bug.error(err);
+					tryAgain();
+					//responseCallback(null);
+				} else {
+					console.log('neo success!');
+					responseCallback(response);
+				}
+			});
+		}
+		execute();
 	}
-
 }
 
 module.exports = NeoConnect;

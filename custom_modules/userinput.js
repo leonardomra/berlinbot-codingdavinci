@@ -10,17 +10,19 @@ const listOfPOIs = require('./../data/schools_coords');
 
 class UserInput {
 
-	init(scope, message) {
+	init(scope, message, kind) {
 		let self = this;
 		self.scope = scope;
 		self.message = message;
+		self.kind = kind;
 		self.user = {
-				firstName: self.message._from._firstName,
-				lastName: self.message._from._lastName,
-				id: self.message._from._id,
+				firstName: self.message.from.firstName,
+				lastName: self.message.from.lastName,
+				id: self.message.from.id,
 			};
 	}
 
+	/*
 	whichKindOfMessage() {
 		let self = this;
 		let kind = '';
@@ -31,20 +33,21 @@ class UserInput {
 		}
 		return kind;
 	}
+	*/
 
 	analyseMessage(callback) {
 		let self = this;
-		switch (self.whichKindOfMessage()) {
+		switch (self.kind) {
 			case 'location':
 				let pd = new PoiDist(listOfPOIs);
 				pd.init(listOfPOIs);
-				let list = pd.calculateDistance([self.message._location._latitude, self.message._location._longitude]);
+				let list = pd.calculateDistance([self.message.location.latitude, self.message.location.longitude]);
 				self.processLocationMessage(list, function(reply) {
 					callback(reply);
 				});
 				break;
 			case 'text':
-				self.processTextMessage(self.message._text, function(reply) {
+				self.processTextMessage(self.message.text, function(reply) {
 					callback(reply);
 				});
 				break;

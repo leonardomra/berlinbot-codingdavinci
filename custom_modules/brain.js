@@ -15,7 +15,7 @@ const Persons = require('./artfacts/neo/persons');
 //const Node = require('./artfacts/node');
 const BotOutput = require('./botoutput');
 const bug = require('./mydebugger');
-
+const EventEmitter = require('events');
 /** Class representing a part of a story. */
 
 class Brain {
@@ -34,6 +34,9 @@ class Brain {
 		self.isStoryActive = false;
 		self.isLiveLocationActive = false;
 		self.locationReplyCounter = 0;
+		self.locationEmitter = new EventEmitter();
+
+		/*
 		var otherwise = new OtherwiseController();
 		otherwise.in = self.in;
 		otherwise.grabReply = function (reply, scope) {
@@ -42,10 +45,52 @@ class Brain {
 		var command = new CommandController();
 		command.out = self.out;
 		command.brain = self;
+		*/
+		self.startTelegrafRouters();
+		/*
 		self.telegram.router
 			.when(new TextCommand('/start', 'welcomeCommand'), command)
 			.when(new TextCommand('/tour', 'takeTour'), command)
 			.otherwise(otherwise);
+		*/
+	}
+
+	/**
+	* Start Telegraf Routers
+	*/
+	startTelegrafRouters() {
+		let self = this;
+		self.telegraf.start((scope) => {
+			return self.out.replyWithWelcomeMessage(scope);
+		});
+		// commands
+		self.telegraf.command('help', (scope) => {
+			return scope.reply('I will help you!').then(function(fuck) {
+				console.log('and what?');
+			});
+		});
+		self.telegraf.command('tour', (scope) => {
+			return scope.reply('got it, you want tour');
+		});
+		self.telegraf.command('exit', (scope) => {
+			self.isStoryActive = false;
+			return scope.reply('You decided to quit the tour. See you next time!');
+		});
+		// regular text
+		self.telegraf.on('text', (scope) => {
+			self.in.init(scope, scope.message, 'text');
+			self.in.analyseMessage(function(reply) {
+				self.manageIntent(reply, scope);
+			});
+		});
+		// location
+		self.telegraf.on('location', (scope) => {
+			self.in.init(scope, scope.message, 'location');
+			self.in.analyseMessage(function(reply) {
+				self.manageIntent(reply, scope);
+			});
+		});
+		self.telegraf.startWebhook(self.hook, null, self.port);
 	}
 
 	/**
@@ -127,7 +172,13 @@ class Brain {
 				self.timeOutLocationActive = undefined;
 			}, 120000);
 		}
-		self.out.replyWithSimpleMessage(scope, reply.text);
+		if (!self.isStoryActive) {
+			self.out.replyWithSimpleMessage(scope, reply.text);
+		} else {
+			// move next
+			self.locationEmitter.emit('GOT_LOCATION');
+			//self.bot.
+		}
 	}
 
 	/**

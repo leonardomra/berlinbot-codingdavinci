@@ -22,7 +22,10 @@ class Bot {
 		bug.artmsg('Hit from StoryFact!');
 		let self = this;
 		self.brain = new Brain();
-		self.brain.telegram = self.telegram;
+		//self.brain.telegram = self.telegram;
+		self.brain.telegraf = self.telegraf;
+		self.brain.hook = self.hook;
+		self.brain.port = self.port;
 		self.node = new Node();
 		self.node.init();
 		self.projectId = '59faeeb23dcf640fb556b5e5';
@@ -78,18 +81,6 @@ class Bot {
 		let self = this;
 		self.brain.init();
 		self.brain.bot = self;
-
-		/*
-		function displayWhatIsThere(subject) {
-			console.log(subject.label + ': '+ subject.content);
-			console.log(subject)
-		}
-		for (let key in self.library) {
-			if (key === 'StoryAct') {
-				self.library[key].objs.forEach(displayWhatIsThere);
-			}
-		}
-		*/
 	}
 
 	loadSubjectQuantifiersForFacts() {
@@ -134,7 +125,6 @@ class Bot {
 		for (let key in self.library) {
 			self.library[key].objs.forEach(handleFact);
 		}
-		//console.log(self.library.StoryFact.objs[0]);
 		self.moveToStage01();
 	}
 
@@ -217,74 +207,133 @@ class Bot {
 		return true;
 	}
 
-	startStory(scope) {
+	stopStory() {
+
+	}
+
+	startStory(scope, stringId) {
 		let self = this;
+		self.brain.locationEmitter.on('GOT_LOCATION', () => {
+  			console.log('an event occurred!');
+		});
 		self.availableActions = {
-			detectLiveLocationActive: function() {
+			detectLiveLocationActiveForAct1Speech1: function(self, scope, fact) {
 				var interval =  setInterval(function() {
 					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
-						console.log('live location is active');
-
+						bug.artmsg('live location is active');
+						if (self.storyOrderCursor === 1) {
+							self.nextFact(self, scope, fact);
+							//clearInterval(interval);
+						}
 					} else {
-						console.log('live location is dead');
+						bug.artmsg('live location is dead');
+						self.brain.out.replyWithSimpleMessage(scope, 'Please, share your live location!');
 					}
-					//clearInterval(interval);
-				}, 2000);
+				}, 5000);
 			},
 			sendImage: function(scope, url) {
 				self.brain.out.replyWithImage(scope, url);
 			}
 		};
 		self.brain.isStoryActive = true;
-		let storyOrder = ['mainNarratives', ''];
-		self.storyActCursor = 0;
-		self.mainNarrativeCursor = 0;
-		self.actionCursor = 0;
-		self.mediumCursor = 0;
-		self.speechCursor = 0;
-		let storyActs = self.library.StoryAct.objs;
-		if (self.checkIfObjsHaveTime(storyActs)) {
-			self.sortFacts(storyActs);
-			let currentStoryAct = storyActs[self.storyActCursor];
-			self.startStoryAct(scope, currentStoryAct);
-		} else {
-			bug.artmsg('Will abort :(');
-		}
+		self.storyOrderCursor = 0;
+		self.storyOrder = [
+			{name: self.startStoryAct, isCurrent: false, isComplete: false, cursor: 0},
+			{name: self.startNarrative, isCurrent: false, isComplete: false, cursor: 0},
+			{name: self.startSpeech, isCurrent: false, isComplete: false, cursor: 0},
+		];
+		self.storyOrder[self.storyOrderCursor].name(self, scope);
+	}
+
+	storyManager(storyOrderCursor) {
+		//self.storyOrder
+	}
+
+	nextFact(self, scope, fact) {
+		setTimeout(function() {
+			self.storyOrder[self.storyOrderCursor].isCurrent = false;
+			self.storyOrder[self.storyOrderCursor].isComplete = true;
+			self.storyOrderCursor++;
+			self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+		}, 1000);
 	}
 
 // if action exist, you wait for it, if not you jump
 
-	startStoryAct(scope, currentStoryAct) {
-		let self = this;
-		let currentNarrative = currentStoryAct.mainNarratives[self.mainNarrativeCursor];
-		self.brain.out.replyWithSimpleMessage(scope, currentNarrative.content);
-		self.startNarrative(scope, currentNarrative);
-	}
-
-	startNarrative(scope, currentNarrative) {
-		let self = this;
-		let currentMedium = currentNarrative.mediums[self.mediumCursor];
-		let currentAction =  currentNarrative.actions[self.actionCursor];
-		if (currentMedium) self.executeQuantifier(scope, currentMedium);
-		if (currentAction) {
-			if (!self.executeQuantifier(scope, currentAction)) self.startSpeechPhase(scope, '');
+	startStoryAct(self, scope) {
+		let currentStoryAct;
+		let storyActs = self.library.StoryAct.objs;
+		if (self.checkIfObjsHaveTime(storyActs)) {
+			self.sortFacts(storyActs);
+			currentStoryAct = storyActs[self.storyOrder[self.storyOrderCursor].cursor];
+			//check if there is action
+			self.nextFact(self, scope, currentStoryAct);
 		} else {
-			console.log('II');
-			self.startSpeechPhase(scope, '');
-			scope.waitForRequest.then(scope => {
-				console.log('shit');
-        		scope.sendMessage('Got message from you!');
-    		});
+			bug.artmsg('Will abort :(');
+			return;
+			//should stop the story
 		}
 	}
 
-	startSpeechPhase(scope, currentSpeech) {
-		let self = this;
-		self.brain.out.replyWithSimpleMessage(scope, 'fuck this shit');
+	startNarrative(self, scope, currentStoryAct) {
+		let currentNarrative = currentStoryAct.mainNarratives[self.storyOrder[self.storyOrderCursor].cursor];
+		self.brain.out.replyWithSimpleMessage(scope, currentNarrative.content);
+		let mediumCursor = 0;
+		let currentMedium = currentNarrative.mediums[mediumCursor];
+		if (currentMedium) self.executeQuantifier(self, scope, currentNarrative, currentMedium);
+		let actionCursor = 0;
+		let currentAction =  currentNarrative.actions[actionCursor];
+		if (currentAction) { // if there is no action signed, jump to the next phase
+			if (!self.executeQuantifier(self, scope, currentStoryAct, currentAction)) self.nextFact(self, scope, currentStoryAct);
+		} else {
+			self.nextFact(self, scope, currentStoryAct);
+		}
 	}
 
-	executeQuantifier(scope, subject) {
-		let self = this;
+	startSpeech(self, scope, currentStoryAct) {
+		let speeches = currentStoryAct.actorSpeechs;
+		let currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
+		let mediumCursor = 0;
+		if (currentSpeech.mediums.length !== 0) self.sortFacts(currentSpeech.mediums);
+		function nextSpeech() {
+			if (self.storyOrder[self.storyOrderCursor].cursor < speeches.length) {
+				currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
+				self.brain.out.replyWithSimpleMessage(scope, currentSpeech.content);
+				self.storyOrder[self.storyOrderCursor].cursor++;
+				nextMedium();
+				executeAction();
+			}
+		}
+		function nextMedium() {
+			if (mediumCursor < currentSpeech.mediums.length) {
+				let currentMedium = currentSpeech.mediums[mediumCursor];
+				if (currentMedium) self.executeQuantifier(self, scope, currentSpeech, currentMedium);
+				mediumCursor++;
+				nextMedium();
+			}
+		}
+		function executeAction() {
+			let actionCursor = 0;
+			let currentAction =  currentSpeech.actions[actionCursor];
+			if (currentAction) {
+				if (!self.executeQuantifier(self, scope, currentSpeech, currentAction)) nextSpeech();//self.nextFact(self, scope, currentStoryAct);
+			} else {
+				setTimeout(function() {
+					nextSpeech();
+				}, 3000);
+				//self.nextFact(self, scope, currentStoryAct);
+			}
+		}
+		if (self.checkIfObjsHaveTime(speeches)) {
+			self.sortFacts(speeches);
+			nextSpeech();
+		} else {
+			bug.artmsg('Will abort :(');
+			return;
+		}
+	}
+
+	executeQuantifier(self, scope, fact, subject) {
 		let toBePerformedList = [];
 		for (var i = self.qts.length - 1; i >= 0; i--) {
 			if (subject[self.qts[i]] !== undefined) {
@@ -297,13 +346,22 @@ class Bot {
 			let entry = toBePerformedList[j];
 			switch (entry.ins) {
 				case 'Action':
-					self.availableActions[entry.val]();
+				try {
+					self.availableActions[entry.val](self, scope, fact);
 					return true;
+				} catch(e) {
+					// statements
+					bug.error('Your instantiation might be wrong');
+					self.brain.out.replyWithSimpleMessage(scope, 'My developer told me to tell you that you should check the instantiation for ' + subject.content);
+					return false;
+				}
+				break;
 				case 'Medium':
 					if (entry.qt === 'image') {
 						self.availableActions.sendImage(scope, entry.val);
+						return true;
 					}
-					return true;
+				break;
 				case 'POI':
 					// statements_1
 					break;

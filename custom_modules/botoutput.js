@@ -3,25 +3,26 @@
 /* jshint node: true */
 
 const Bug = require('./mydebugger');
+const Telegraf = require('telegraf');
 
 class BotOutput {
 
 	replyWithImage(scope, imageUrl) {
-		scope.sendPhoto({ url: imageUrl});
+		scope.replyWithPhoto(imageUrl);
 	}
 
 	replyWithSimpleMessage(scope, message) {
-		scope.sendMessage(message);
+		scope.reply(message);
 	}
 
 	replyWithPersonNotFound(scope) {
 		let reply = 'I\'m sorry. I don\'t know this person. Would you like me to request a research?';
-		scope.sendMessage(reply);
+		scope.reply(reply);
 	}
 
 	replyWithSimpleVictimStatement(scope, person) {
 		let reply = person.name + ' was a ' + person.instance.toLowerCase() + ' of the Nazi regime. ';
-		scope.sendMessage(reply);
+		scope.reply(reply);
 	}
 
 	replyWithMultiplePeopleOptionList(scope, entry, people) {
@@ -33,7 +34,7 @@ class BotOutput {
 		});
 		let botMsg = 'I\'m not sure. There are ' + people.length + ' entries with the name of ' + entry + '. Could you be more specific? \n';
 		botMsg += entities;
-		scope.sendMessage(botMsg);
+		scope.reply(botMsg);
 		return options;
 	}
 
@@ -88,10 +89,17 @@ class BotOutput {
 		} else {
 			reply += '.';
 		}
-		scope.sendMessage(reply);
+		scope.reply(reply);
 	}
 
 	replyWithWelcomeMessage(scope) {
+		const aboutMenu = Telegraf.Extra
+		.markdown()
+		.markup((m) => m.keyboard([
+			[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help')]
+		]).resize());
+		return scope.reply('Welcome text!', aboutMenu);
+		/*
 		scope.runMenu({
 			message: 'Hi there!',
 			layout: 2,
@@ -101,27 +109,35 @@ class BotOutput {
 			'/tour': () => {}, //will be on first line
 			'/help': () => {}, //will be on second line
 		});
+		*/
+	}
+
+	replyWithNotification(scope, reply) {
+		scope.answerCbQuery(reply)
+		.then(function () {
+     		console.log("Promise Resolved");
+		}).catch(function () {
+     		console.log("Promise Rejected");
+		});
 	}
 
 	replyWithMenuTourMessage(scope, reply) {
 		let self = this;
-		let _menu = [];
-		reply.forEach( function(subject) {
-			console.log(subject.content);
-			_menu.push({
-				text: subject.content,
-				callback: (callbackQuery, message) => { //to your callback will be passed callbackQuery and response from method
-					self.brain.bot.startStory(scope);
-					//self.brain.bot.startStory();
-				}
+		const testMenu = Telegraf.Extra
+			.markdown()
+			.markup((m) => {
+				let bts = [];
+				reply.forEach((subject) => {
+					let _action = subject.content.replace(/ /g,'').toLowerCase();
+					bts.push(m.callbackButton(subject.content, _action));
+					self.brain.telegraf.action(_action, (scope) => {
+						//scope.answerCallbackQuery('Please, share your live location!');
+						self.brain.bot.startStory(scope, _action);
+					});
+				});
+				return m.inlineKeyboard(bts);
 			});
-		});
-		scope.runInlineMenu({
-			layout: 2, //some layouting here
-			method: 'sendMessage', //here you must pass the method name
-			params: ['I have the following tours for you! Please choose one!'], //here you must pass the parameters for that method
-			menu: _menu
-		});
+		scope.reply('I have the following tours for you! Please choose one!', testMenu);
 	}
 }
 
