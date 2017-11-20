@@ -63,7 +63,25 @@ class Brain {
 		self.telegraf.start((scope) => {
 			return self.out.replyWithWelcomeMessage(scope);
 		});
+		//
+		self.telegraf.action('yes', (scope) => {
+			self.bot.LoadStoryComponents(scope);
+			return scope.reply('you said yes');
+		});
+		self.telegraf.action('no', (scope) => {
+			self.bot.stopStory(scope);
+			return scope.reply('you said no');
+		});
+		self.telegraf.action('reload', (scope) => {
+			return scope.reply('you said reload');
+		});
 		// commands
+		self.telegraf.command('menu', (scope) => {
+			return scope.reply('will display menu...')
+			.then(function(fuck) {
+				self.out.replyWithYesNoMenu(scope);
+			});
+		});
 		self.telegraf.command('reload', (scope) => {
 			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Please, just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {

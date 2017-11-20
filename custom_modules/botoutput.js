@@ -38,6 +38,15 @@ class BotOutput {
 		return options;
 	}
 
+	replyWithYesNoMenu(scope) {
+		var yesNoMenu = Telegraf.Extra
+		.markdown()
+		.markup((m) => m.inlineKeyboard([
+			[m.callbackButton('Take me to the next spot!', 'yes'), m.callbackButton('No, cancel the tour.', 'no')]
+		]).resize());
+		return scope.reply('Please, let me know when you are ready to go on...', yesNoMenu);
+	}
+
 	replyWithStolpersteinYesNoMenu(scope, person) {
 		scope.runInlineMenu({
 			layout: 2, //some layouting here
@@ -96,20 +105,9 @@ class BotOutput {
 		const aboutMenu = Telegraf.Extra
 		.markdown()
 		.markup((m) => m.keyboard([
-			[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help')]
+			[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help'), m.callbackButton('Reload! 🔃', 'reload')]
 		]).resize());
 		return scope.reply('Welcome text!', aboutMenu);
-		/*
-		scope.runMenu({
-			message: 'Hi there!',
-			layout: 2,
-			resizeKeyboard: true,
-			'What is around me?': () => {}, //will be on first line
-			'/start': () => {}, //will be on first line
-			'/tour': () => {}, //will be on first line
-			'/help': () => {}, //will be on second line
-		});
-		*/
 	}
 
 	replyWithNotification(scope, reply) {

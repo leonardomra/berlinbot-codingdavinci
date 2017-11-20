@@ -120,17 +120,15 @@ class Bot {
 	initializeBotBrain(scope) {
 		let self = this;
 		if (self.brain.bot === undefined) {
-			bug.artmsg('Brain will get 💊');
 			self.brain.init();
 			self.brain.bot = self;
+			//self.brain.out.replyWithSimpleMessage(scope, 'What can I do for you?!');
+			bug.artmsg('Brain will get 💊');
 		} else {
 			bug.artmsg('Brain is already fed.');
 			self.brain.out.replyWithSimpleMessage(scope, 'Taste me! 🌶');
 		}
 	}
-
-
-
 
 	compareLinksAndAddObjects(subject, objects, _key) {
 		objects.forEach( function(object) {
@@ -210,9 +208,10 @@ class Bot {
 		return true;
 	}
 
-	stopStory() {
+	stopStory(scope) {
 		let self = this;
 		self.brain.isStoryActive = false;
+		self.brain.out.replyWithSimpleMessage(scope, 'See you next time!');
 	}
 
 	startStory(scope, stringId) {
@@ -224,7 +223,9 @@ class Bot {
 			clearInterval(self.interval);
 		}
 		self.availableActions = {
-			detectLiveLocationActiveForAct1Speech1: function(self, scope, fact) {
+
+
+			detectLiveLocationActive: function(self, scope, fact) {
 				self.interval =  setInterval(function() {
 					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
 						bug.artmsg('live location is active');
@@ -237,6 +238,11 @@ class Bot {
 					}
 				}, 5000);
 			},
+
+			detectIfUserIsReadyToNextAct: function(self, scope, fact) {
+				self.brain.out.replyWithYesNoMenu(scope);
+			},
+
 			sendImage: function(scope, url) {
 				self.brain.out.replyWithImage(scope, url);
 			}
@@ -255,12 +261,32 @@ class Bot {
 		//self.storyOrder
 	}
 
+	resetStoryOrder(self) {
+		self.storyOrder.forEach(function(fact) {
+			fact.isCurrent = false;
+			fact.isComplete = false;
+			fact.cursor = 0;
+		});
+	}
+
 	nextFact(self, scope, fact) {
 		setTimeout(function() {
 			self.storyOrder[self.storyOrderCursor].isCurrent = false;
 			self.storyOrder[self.storyOrderCursor].isComplete = true;
 			self.storyOrderCursor++;
-			self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+			if (self.storyOrderCursor < self.storyOrder.length) {
+				self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+			} else {
+				self.storyOrderCursor = 0;
+				let currentActCursor = self.storyOrder[0].cursor;
+				self.resetStoryOrder(self);
+				self.storyOrder[0].cursor = currentActCursor;
+				self.storyOrder[0].cursor++;
+				console.log(self.storyOrder[0].cursor)
+				console.log('IMPORTANT: \n');
+				console.log(self.storyOrder);
+				self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+			}
 		}, 1000);
 	}
 
@@ -269,38 +295,47 @@ class Bot {
 	startStoryAct(self, scope) {
 		let currentStoryAct;
 		let storyActs = self.library.StoryAct.objs;
-		if (self.checkIfObjsHaveTime(storyActs)) {
-			self.sortFacts(storyActs);
-			currentStoryAct = storyActs[self.storyOrder[self.storyOrderCursor].cursor];
-			//check if there is action
-			self.nextFact(self, scope, currentStoryAct);
+		if (self.storyOrder[self.storyOrderCursor].cursor < storyActs.length) {
+			if (self.checkIfObjsHaveTime(storyActs)) {
+				self.sortFacts(storyActs);
+				currentStoryAct = storyActs[self.storyOrder[self.storyOrderCursor].cursor];
+				//check if there is action
+				self.nextFact(self, scope, currentStoryAct);
+			} else {
+				bug.artmsg('Will abort :(');
+				return;
+				//should stop the story
+			}
 		} else {
 			bug.artmsg('Will abort :(');
+			self.brain.out.replyWithSimpleMessage(scope, 'The story is finished!');
+			self.stopStory(scope);
 			return;
-			//should stop the story
 		}
 	}
 
 	startNarrative(self, scope, currentStoryAct) {
-		let currentNarrative = currentStoryAct.mainNarratives[self.storyOrder[self.storyOrderCursor].cursor];
-		self.brain.out.replyWithSimpleMessage(scope, currentNarrative.content);
-		let mediumCursor = 0;
-		let currentMedium = currentNarrative.mediums[mediumCursor];
-		if (currentMedium) self.executeQuantifier(self, scope, currentNarrative, currentMedium);
-		let actionCursor = 0;
-		let currentAction =  currentNarrative.actions[actionCursor];
-		if (currentAction) { // if there is no action signed, jump to the next phase
-			if (!self.executeQuantifier(self, scope, currentStoryAct, currentAction)) self.nextFact(self, scope, currentStoryAct);
+		if (currentStoryAct.mainNarratives.length !== 0) {
+			let currentNarrative = currentStoryAct.mainNarratives[self.storyOrder[self.storyOrderCursor].cursor];
+			self.brain.out.replyWithSimpleMessage(scope, currentNarrative.content);
+			let mediumCursor = 0;
+			let currentMedium = currentNarrative.mediums[mediumCursor];
+			if (currentMedium) self.executeQuantifier(self, scope, currentNarrative, currentMedium);
+			let actionCursor = 0;
+			let currentAction =  currentNarrative.actions[actionCursor];
+			if (currentAction) { // if there is no action signed, jump to the next phase
+				if (!self.executeQuantifier(self, scope, currentStoryAct, currentAction)) self.nextFact(self, scope, currentStoryAct);
+			} else {
+				self.nextFact(self, scope, currentStoryAct);
+			}
 		} else {
+			bug.artmsg('No narrative for act. Continuing...');
 			self.nextFact(self, scope, currentStoryAct);
 		}
 	}
 
 	startSpeech(self, scope, currentStoryAct) {
-		let speeches = currentStoryAct.actorSpeechs;
-		let currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
-		let mediumCursor = 0;
-		if (currentSpeech.mediums.length !== 0) self.sortFacts(currentSpeech.mediums);
+		let speeches, currentSpeech, mediumCursor;
 		function nextSpeech() {
 			if (self.storyOrder[self.storyOrderCursor].cursor < speeches.length) {
 				currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
@@ -308,6 +343,8 @@ class Bot {
 				self.storyOrder[self.storyOrderCursor].cursor++;
 				nextMedium();
 				executeAction();
+			} else {
+				self.nextFact(self, scope, currentStoryAct);
 			}
 		}
 		function nextMedium() {
@@ -330,12 +367,20 @@ class Bot {
 				//self.nextFact(self, scope, currentStoryAct);
 			}
 		}
-		if (self.checkIfObjsHaveTime(speeches)) {
-			self.sortFacts(speeches);
-			nextSpeech();
+		if (currentStoryAct.actorSpeechs.length !== 0) {
+			speeches = currentStoryAct.actorSpeechs;
+			currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
+			mediumCursor = 0;
+			if (currentSpeech.mediums.length !== 0) self.sortFacts(currentSpeech.mediums);
+			if (self.checkIfObjsHaveTime(speeches)) {
+				self.sortFacts(speeches);
+				nextSpeech();
+			} else {
+				bug.artmsg('Will abort :(');
+				return;
+			}
 		} else {
-			bug.artmsg('Will abort :(');
-			return;
+			self.nextFact(self, scope, currentStoryAct);
 		}
 	}
 
