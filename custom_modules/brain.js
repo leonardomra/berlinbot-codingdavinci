@@ -65,8 +65,11 @@ class Brain {
 		});
 		//
 		self.telegraf.action('yes', (scope) => {
-			self.bot.LoadStoryComponents(scope);
-			return scope.reply('you said yes');
+			if (self.bot.currentActForMenuCallback !== undefined) {
+				self.bot.nextFact(self.bot, scope, self.bot.currentActForMenuCallback);
+			} else {
+				bug.error('No currentActForMenuCallback defined.');
+			}
 		});
 		self.telegraf.action('no', (scope) => {
 			self.bot.stopStory(scope);
@@ -83,7 +86,7 @@ class Brain {
 			});
 		});
 		self.telegraf.command('reload', (scope) => {
-			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Please, just a second! I will let you know when I\'m ready... ⏰')
+			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {
 				self.bot.LoadStoryComponents(scope);
 			});

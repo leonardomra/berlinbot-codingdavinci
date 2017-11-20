@@ -55,7 +55,7 @@ class Bot {
 				o.loadSubjectWithID(id, function(subject) {
 					subject.factIsLoaded = true;
 					if (self.watchLibraryLoad(self.library)) {
-						bug.artmsg('Ok... I\'m half awake!');
+						bug.artmsg('Ok... I\'m half awake!'); // if I don't take up, check your knowledge chunks. There might be too many disconnected entities...
 						self.distributeFacts(scope);
 					}
 				});
@@ -224,7 +224,6 @@ class Bot {
 		}
 		self.availableActions = {
 
-
 			detectLiveLocationActive: function(self, scope, fact) {
 				self.interval =  setInterval(function() {
 					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
@@ -234,12 +233,13 @@ class Bot {
 						}
 					} else {
 						bug.artmsg('live location is dead');
-						self.brain.out.replyWithSimpleMessage(scope, 'Please, share your live location!');
+						//self.brain.out.replyWithSimpleMessage(scope, 'Please, share your live location!');
 					}
 				}, 5000);
 			},
 
 			detectIfUserIsReadyToNextAct: function(self, scope, fact) {
+				self.currentActForMenuCallback = fact;
 				self.brain.out.replyWithYesNoMenu(scope);
 			},
 
