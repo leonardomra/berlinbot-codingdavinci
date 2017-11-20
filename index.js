@@ -11,7 +11,7 @@ const Telegraf = require('telegraf');
 //
 const API_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const PORT = process.env.PORT || 3000;
-const URL = 'https://6c5e0019.ngrok.io'; //process.env.URL || 'https://your-heroku-app.herokuapp.com';
+const URL = 'https://83d33dda.ngrok.io'; //process.env.URL || 'https://your-heroku-app.herokuapp.com';
 
 //
 const telegraf = new Telegraf(API_TOKEN);

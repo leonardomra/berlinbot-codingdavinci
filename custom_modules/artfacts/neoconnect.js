@@ -45,7 +45,12 @@ class NeoConnect {
 					tryAgain();
 					//responseCallback(null);
 				} else {
-					console.log('neo success!');
+					try {
+						console.log('Connection with Artfacts succeeded for ' + Object.keys(response[0])[0]);
+					} catch(e) {
+						//console.log(e);
+						console.log('Connection with Artfacts succeeded!');
+					}
 					responseCallback(response);
 				}
 			});

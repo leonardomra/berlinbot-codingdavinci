@@ -30,6 +30,11 @@ class Bot {
 		self.node.init();
 		self.projectId = '59faeeb23dcf640fb556b5e5';
 		self.qts = ['time', 'image', 'extra', 'video', 'audio', 'gps', 'url'];
+		self.LoadStoryComponents(null);
+	}
+
+	LoadStoryComponents(scope) {
+		let self = this;
 		self.library = {
 			'StoryFact': {class: StoryFact, objs: []},
 			'StoryAct': {class: StoryAct, objs: []},
@@ -41,11 +46,6 @@ class Bot {
 			'Medium': {class: Medium, objs: []},
 			'Action': {class: Action, objs: []},
 		};
-		self.moveToStage00();
-	}
-
-	moveToStage00() {
-		let self = this;
 		function handleIds(ids, className) {
 			ids.forEach( function(id) {
 				var o = new self.library[className].class();
@@ -56,7 +56,7 @@ class Bot {
 					subject.factIsLoaded = true;
 					if (self.watchLibraryLoad(self.library)) {
 						bug.artmsg('Ok... I\'m half awake!');
-						self.distributeFacts();
+						self.distributeFacts(scope);
 					}
 				});
 			});
@@ -72,18 +72,24 @@ class Bot {
 		}
 	}
 
-	moveToStage01() {
+	distributeFacts(scope) {
 		let self = this;
-		self.loadSubjectQuantifiersForFacts();
+		function handleFact(fact) {
+			for (let key in self.library) {
+				let _key = key.charAt(0).toLowerCase()+ key.slice(1);
+				_key += 's';
+				if (fact.hasOwnProperty(_key)) {
+					self.compareLinksAndAddObjects(fact, self.library[key].objs, _key);
+				}
+			}
+		}
+		for (let key in self.library) {
+			self.library[key].objs.forEach(handleFact);
+		}
+		self.loadSubjectQuantifiersForFacts(scope);
 	}
 
-	moveToStage02() {
-		let self = this;
-		self.brain.init();
-		self.brain.bot = self;
-	}
-
-	loadSubjectQuantifiersForFacts() {
+	loadSubjectQuantifiersForFacts(scope) {
 		let self = this;
 		function handleTimeQuantifer(fact) {
 			fact.time = undefined;
@@ -101,7 +107,7 @@ class Bot {
 					}
 					if (self.watchQuantifierLoad(self.library, self.qts)) {
 						bug.artmsg('I\'m ready babe!!!');
-						self.moveToStage02();
+						self.initializeBotBrain(scope);
 					}
 				});
 			});
@@ -111,22 +117,19 @@ class Bot {
 		}
 	}
 
-	distributeFacts() {
+	initializeBotBrain(scope) {
 		let self = this;
-		function handleFact(fact) {
-			for (let key in self.library) {
-				let _key = key.charAt(0).toLowerCase()+ key.slice(1);
-				_key += 's';
-				if (fact.hasOwnProperty(_key)) {
-					self.compareLinksAndAddObjects(fact, self.library[key].objs, _key);
-				}
-			}
+		if (self.brain.bot === undefined) {
+			bug.artmsg('Brain will get 💊');
+			self.brain.init();
+			self.brain.bot = self;
+		} else {
+			bug.artmsg('Brain is already fed.');
+			self.brain.out.replyWithSimpleMessage(scope, 'Taste me! 🌶');
 		}
-		for (let key in self.library) {
-			self.library[key].objs.forEach(handleFact);
-		}
-		self.moveToStage01();
 	}
+
+
 
 
 	compareLinksAndAddObjects(subject, objects, _key) {
@@ -208,7 +211,8 @@ class Bot {
 	}
 
 	stopStory() {
-
+		let self = this;
+		self.brain.isStoryActive = false;
 	}
 
 	startStory(scope, stringId) {
@@ -216,14 +220,16 @@ class Bot {
 		self.brain.locationEmitter.on('GOT_LOCATION', () => {
   			console.log('an event occurred!');
 		});
+		if (self.interval) {
+			clearInterval(self.interval);
+		}
 		self.availableActions = {
 			detectLiveLocationActiveForAct1Speech1: function(self, scope, fact) {
-				var interval =  setInterval(function() {
+				self.interval =  setInterval(function() {
 					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
 						bug.artmsg('live location is active');
 						if (self.storyOrderCursor === 1) {
 							self.nextFact(self, scope, fact);
-							//clearInterval(interval);
 						}
 					} else {
 						bug.artmsg('live location is dead');

@@ -64,6 +64,12 @@ class Brain {
 			return self.out.replyWithWelcomeMessage(scope);
 		});
 		// commands
+		self.telegraf.command('reload', (scope) => {
+			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Please, just a second! I will let you know when I\'m ready... ⏰')
+			.then(function(fuck) {
+				self.bot.LoadStoryComponents(scope);
+			});
+		});
 		self.telegraf.command('help', (scope) => {
 			return scope.reply('I will help you!').then(function(fuck) {
 				console.log('and what?');
