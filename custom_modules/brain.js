@@ -63,7 +63,9 @@ class Brain {
 		self.telegraf.start((scope) => {
 			return self.out.replyWithWelcomeMessage(scope);
 		});
-		//
+		
+		// actions
+		
 		self.telegraf.action('yes', (scope) => {
 			if (self.bot.currentActForMenuCallback !== undefined) {
 				self.bot.nextFact(self.bot, scope, self.bot.currentActForMenuCallback);
@@ -78,7 +80,9 @@ class Brain {
 		self.telegraf.action('reload', (scope) => {
 			return scope.reply('you said reload');
 		});
+
 		// commands
+		
 		self.telegraf.command('menu', (scope) => {
 			return scope.reply('will display menu...')
 			.then(function(fuck) {
@@ -92,8 +96,9 @@ class Brain {
 			});
 		});
 		self.telegraf.command('help', (scope) => {
-			return scope.reply('I will help you!').then(function(fuck) {
-				console.log('and what?');
+			return scope.reply('I will help you!')
+			.then(function() {
+				//scope.replyWithChatAction('typing');
 			});
 		});
 		self.telegraf.command('tour', (scope) => {

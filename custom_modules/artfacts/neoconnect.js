@@ -42,6 +42,7 @@ class NeoConnect {
 					//throw err;
 					console.log('ERROR FROM NEO4J. Trying execute query ' + queryString);
 					bug.error(err);
+					bug.error('Will handle error...');
 					tryAgain();
 					//responseCallback(null);
 				} else {

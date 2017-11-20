@@ -8,11 +8,27 @@ const Telegraf = require('telegraf');
 class BotOutput {
 
 	replyWithImage(scope, imageUrl) {
-		scope.replyWithPhoto(imageUrl);
+		//scope.replyWithChatAction('upload_photo');
+		return scope.replyWithPhoto(imageUrl);
+	}
+
+	replyWithVideo(scope, videoUrl) {
+		//scope.replyWithChatAction('upload_video');
+		return scope.replyWithVideo({ url: videoUrl });
+	}
+
+	replyWithHTML(scope, htmlUrl) {
+		return scope.replyWithHTML({ url: htmlUrl });
+	}
+
+	replyWithAudio(scope, audioUrl) {
+		//scope.replyWithChatAction('upload_audio');
+		return scope.replyWithAudio({ url: audioUrl });
 	}
 
 	replyWithSimpleMessage(scope, message) {
-		scope.reply(message);
+		//scope.replyWithChatAction('typing');
+		return scope.reply(message);
 	}
 
 	replyWithPersonNotFound(scope) {
@@ -39,11 +55,12 @@ class BotOutput {
 	}
 
 	replyWithYesNoMenu(scope) {
+		//scope.replyWithChatAction('typing');
 		var yesNoMenu = Telegraf.Extra
-		.markdown()
-		.markup((m) => m.inlineKeyboard([
-			[m.callbackButton('Take me to the next spot!', 'yes'), m.callbackButton('No, cancel the tour.', 'no')]
-		]).resize());
+			.markdown()
+			.markup((m) => m.inlineKeyboard([
+				[m.callbackButton('Take me to the next spot!', 'yes'), m.callbackButton('No, cancel the tour.', 'no')]
+			]).resize());
 		return scope.reply('Please, let me know when you are ready to go on...', yesNoMenu);
 	}
 
@@ -102,11 +119,12 @@ class BotOutput {
 	}
 
 	replyWithWelcomeMessage(scope) {
+		//scope.replyWithChatAction('typing');
 		const aboutMenu = Telegraf.Extra
-		.markdown()
-		.markup((m) => m.keyboard([
-			[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help'), m.callbackButton('Reload! 🔃', 'reload')]
-		]).resize());
+			.markdown()
+			.markup((m) => m.keyboard([
+				[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help'), m.callbackButton('Reload! 🔃', 'reload')]
+			]).resize());
 		return scope.reply('Welcome text!', aboutMenu);
 	}
 
@@ -121,6 +139,7 @@ class BotOutput {
 
 	replyWithMenuTourMessage(scope, reply) {
 		let self = this;
+		//scope.replyWithChatAction('typing');
 		const testMenu = Telegraf.Extra
 			.markdown()
 			.markup((m) => {

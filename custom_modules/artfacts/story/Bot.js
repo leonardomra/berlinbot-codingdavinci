@@ -22,7 +22,6 @@ class Bot {
 		bug.artmsg('Hit from StoryFact!');
 		let self = this;
 		self.brain = new Brain();
-		//self.brain.telegram = self.telegram;
 		self.brain.telegraf = self.telegraf;
 		self.brain.hook = self.hook;
 		self.brain.port = self.port;
@@ -55,7 +54,7 @@ class Bot {
 				o.loadSubjectWithID(id, function(subject) {
 					subject.factIsLoaded = true;
 					if (self.watchLibraryLoad(self.library)) {
-						bug.artmsg('Ok... I\'m half awake!'); // if I don't take up, check your knowledge chunks. There might be too many disconnected entities...
+						bug.artmsg('------------------> Ok... I\'m half awake!'); // if I don't take up, check your knowledge chunks. There might be too many disconnected entities...
 						self.distributeFacts(scope);
 					}
 				});
@@ -106,7 +105,7 @@ class Bot {
 						fact.encodeTime();
 					}
 					if (self.watchQuantifierLoad(self.library, self.qts)) {
-						bug.artmsg('I\'m ready babe!!!');
+						bug.artmsg('------------------> I\'m ready babe!!!');
 						self.initializeBotBrain(scope);
 					}
 				});
@@ -208,14 +207,16 @@ class Bot {
 		return true;
 	}
 
-	stopStory(scope) {
+	stopStory(scope, point) {
+		bug.artmsg('Story will be stopped...');
 		let self = this;
 		self.brain.isStoryActive = false;
-		self.brain.out.replyWithSimpleMessage(scope, 'See you next time!');
+		self.brain.out.replyWithSimpleMessage(scope, 'Story was stopped.');
 	}
 
 	startStory(scope, stringId) {
 		let self = this;
+		scope.replyWithChatAction('typing');
 		self.brain.locationEmitter.on('GOT_LOCATION', () => {
   			console.log('an event occurred!');
 		});
@@ -228,7 +229,8 @@ class Bot {
 				self.interval =  setInterval(function() {
 					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
 						bug.artmsg('live location is active');
-						if (self.storyOrderCursor === 1) {
+						if (self.storyVerticalOrderCursor === 1 && self.storyOrder[self.storyVerticalOrderCursor].cursor === 0) {
+							clearInterval(self.interval);
 							self.nextFact(self, scope, fact);
 						}
 					} else {
@@ -244,21 +246,30 @@ class Bot {
 			},
 
 			sendImage: function(scope, url) {
-				self.brain.out.replyWithImage(scope, url);
-			}
+				return self.brain.out.replyWithImage(scope, url);
+			},
+
+			sendVideo: function(scope, url) {
+				return self.brain.out.replyWithVideo(scope, url);
+			},
+
+			sendHTML: function(scope, url) {
+				return self.brain.out.replyWithHTML(scope, url);
+			},
+
+			sendAudio: function(scope, url) {
+				return self.brain.out.replyWithAudio(scope, url);
+			},
+
 		};
 		self.brain.isStoryActive = true;
-		self.storyOrderCursor = 0;
+		self.storyVerticalOrderCursor = 0;
 		self.storyOrder = [
 			{name: self.startStoryAct, isCurrent: false, isComplete: false, cursor: 0},
 			{name: self.startNarrative, isCurrent: false, isComplete: false, cursor: 0},
 			{name: self.startSpeech, isCurrent: false, isComplete: false, cursor: 0},
 		];
-		self.storyOrder[self.storyOrderCursor].name(self, scope);
-	}
-
-	storyManager(storyOrderCursor) {
-		//self.storyOrder
+		self.storyOrder[self.storyVerticalOrderCursor].name(self, scope, null);  // <-- exec first
 	}
 
 	resetStoryOrder(self) {
@@ -270,53 +281,54 @@ class Bot {
 	}
 
 	nextFact(self, scope, fact) {
+		scope.replyWithChatAction('typing');
 		setTimeout(function() {
-			self.storyOrder[self.storyOrderCursor].isCurrent = false;
-			self.storyOrder[self.storyOrderCursor].isComplete = true;
-			self.storyOrderCursor++;
-			if (self.storyOrderCursor < self.storyOrder.length) {
-				self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+			self.storyOrder[self.storyVerticalOrderCursor].isCurrent = false;
+			self.storyOrder[self.storyVerticalOrderCursor].isComplete = true;
+			self.storyVerticalOrderCursor++;
+			if (self.storyVerticalOrderCursor < self.storyOrder.length) {
+				self.storyOrder[self.storyVerticalOrderCursor].name(self, scope, fact);  // <-- exec
 			} else {
-				self.storyOrderCursor = 0;
+				self.storyVerticalOrderCursor = 0;
 				let currentActCursor = self.storyOrder[0].cursor;
 				self.resetStoryOrder(self);
 				self.storyOrder[0].cursor = currentActCursor;
 				self.storyOrder[0].cursor++;
-				console.log(self.storyOrder[0].cursor)
-				console.log('IMPORTANT: \n');
-				console.log(self.storyOrder);
-				self.storyOrder[self.storyOrderCursor].name(self, scope, fact);
+				self.storyOrder[self.storyVerticalOrderCursor].name(self, scope, fact);  // <-- exec
 			}
-		}, 1000);
+		}, 500);
 	}
-
-// if action exist, you wait for it, if not you jump
 
 	startStoryAct(self, scope) {
 		let currentStoryAct;
 		let storyActs = self.library.StoryAct.objs;
-		if (self.storyOrder[self.storyOrderCursor].cursor < storyActs.length) {
+		function abort(msg) {
+			self.brain.out.replyWithSimpleMessage(scope, msg);
+			self.stopStory(scope, 'startStoryAct');
+		}
+		if (self.storyOrder[self.storyVerticalOrderCursor].cursor < storyActs.length) {
 			if (self.checkIfObjsHaveTime(storyActs)) {
 				self.sortFacts(storyActs);
-				currentStoryAct = storyActs[self.storyOrder[self.storyOrderCursor].cursor];
+				currentStoryAct = storyActs[self.storyOrder[self.storyVerticalOrderCursor].cursor];
+				//bug.artmsg('StoryAct is in position ' +  self.storyOrder[self.storyVerticalOrderCursor].cursor + '.');
 				//check if there is action
 				self.nextFact(self, scope, currentStoryAct);
 			} else {
-				bug.artmsg('Will abort :(');
+				let msg = 'Time of facts are not properly configured. Will abort :(';
+				abort(msg);
 				return;
-				//should stop the story
 			}
 		} else {
-			bug.artmsg('Will abort :(');
-			self.brain.out.replyWithSimpleMessage(scope, 'The story is finished!');
-			self.stopStory(scope);
-			return;
+			let msg = 'There are no more stories to tell. See you next time!';
+			 abort(msg);
+			 return;
 		}
 	}
 
 	startNarrative(self, scope, currentStoryAct) {
 		if (currentStoryAct.mainNarratives.length !== 0) {
-			let currentNarrative = currentStoryAct.mainNarratives[self.storyOrder[self.storyOrderCursor].cursor];
+			scope.replyWithChatAction('typing');
+			let currentNarrative = currentStoryAct.mainNarratives[self.storyOrder[self.storyVerticalOrderCursor].cursor];
 			self.brain.out.replyWithSimpleMessage(scope, currentNarrative.content);
 			let mediumCursor = 0;
 			let currentMedium = currentNarrative.mediums[mediumCursor];
@@ -336,13 +348,26 @@ class Bot {
 
 	startSpeech(self, scope, currentStoryAct) {
 		let speeches, currentSpeech, mediumCursor;
+		var delayMultiplier = 0;
 		function nextSpeech() {
-			if (self.storyOrder[self.storyOrderCursor].cursor < speeches.length) {
-				currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
-				self.brain.out.replyWithSimpleMessage(scope, currentSpeech.content);
-				self.storyOrder[self.storyOrderCursor].cursor++;
-				nextMedium();
-				executeAction();
+			if (self.storyOrder[self.storyVerticalOrderCursor].cursor < speeches.length) {
+				scope.replyWithChatAction('typing');
+				currentSpeech = speeches[self.storyOrder[self.storyVerticalOrderCursor].cursor];
+				if (currentSpeech.mediums.length !== 0) {
+					if (self.checkIfObjsHaveTime(currentSpeech.mediums)) {
+						self.sortFacts(currentSpeech.mediums);
+					} else {
+						abort();
+						return;
+					}
+				}
+				self.brain.out.replyWithSimpleMessage(scope, currentSpeech.content)
+					.then(function() {
+						self.storyOrder[self.storyVerticalOrderCursor].cursor++;
+						nextMedium();
+					}).catch(function () {
+						bug.error("Promise Rejected");
+					});
 			} else {
 				self.nextFact(self, scope, currentStoryAct);
 			}
@@ -350,9 +375,15 @@ class Bot {
 		function nextMedium() {
 			if (mediumCursor < currentSpeech.mediums.length) {
 				let currentMedium = currentSpeech.mediums[mediumCursor];
-				if (currentMedium) self.executeQuantifier(self, scope, currentSpeech, currentMedium);
-				mediumCursor++;
-				nextMedium();
+				if (currentMedium) {
+					self.executeQuantifier(self, scope, currentSpeech, currentMedium)
+						.then(function() {
+							mediumCursor++;
+							nextMedium();
+						});
+				}
+			} else {
+				executeAction();
 			}
 		}
 		function executeAction() {
@@ -361,22 +392,24 @@ class Bot {
 			if (currentAction) {
 				if (!self.executeQuantifier(self, scope, currentSpeech, currentAction)) nextSpeech();//self.nextFact(self, scope, currentStoryAct);
 			} else {
-				setTimeout(function() {
-					nextSpeech();
-				}, 3000);
-				//self.nextFact(self, scope, currentStoryAct);
+				nextSpeech();
 			}
+		}
+		function abort() {
+			let msg = 'Time of speeches are not properly configured. Will abort :(';
+			bug.artmsg(msg);
+			self.brain.out.replyWithSimpleMessage(scope, msg);
+			self.stopStory(scope, 'startSpeech');
 		}
 		if (currentStoryAct.actorSpeechs.length !== 0) {
 			speeches = currentStoryAct.actorSpeechs;
-			currentSpeech = speeches[self.storyOrder[self.storyOrderCursor].cursor];
+			currentSpeech = speeches[self.storyOrder[self.storyVerticalOrderCursor].cursor];
 			mediumCursor = 0;
-			if (currentSpeech.mediums.length !== 0) self.sortFacts(currentSpeech.mediums);
 			if (self.checkIfObjsHaveTime(speeches)) {
 				self.sortFacts(speeches);
 				nextSpeech();
 			} else {
-				bug.artmsg('Will abort :(');
+				abort();
 				return;
 			}
 		} else {
@@ -386,6 +419,7 @@ class Bot {
 
 	executeQuantifier(self, scope, fact, subject) {
 		let toBePerformedList = [];
+		let objToReturn;
 		for (var i = self.qts.length - 1; i >= 0; i--) {
 			if (subject[self.qts[i]] !== undefined) {
 				let qt = self.qts[i];
@@ -399,18 +433,26 @@ class Bot {
 				case 'Action':
 				try {
 					self.availableActions[entry.val](self, scope, fact);
-					return true;
+					objToReturn = true;
 				} catch(e) {
 					// statements
 					bug.error('Your instantiation might be wrong');
 					self.brain.out.replyWithSimpleMessage(scope, 'My developer told me to tell you that you should check the instantiation for ' + subject.content);
-					return false;
+					objToReturn = false;
 				}
 				break;
 				case 'Medium':
 					if (entry.qt === 'image') {
-						self.availableActions.sendImage(scope, entry.val);
-						return true;
+						scope.replyWithChatAction('upload_photo');
+						objToReturn =  self.availableActions.sendImage(scope, entry.val);
+					} else if (entry.qt === 'video') {
+						scope.replyWithChatAction('upload_video');
+						objToReturn = self.availableActions.sendVideo(scope, entry.val);
+					} else if (entry.qt === 'url') {
+						objToReturn = self.availableActions.sendHTML(scope, entry.val);
+					} else if (entry.qt === 'audio') {
+						scope.replyWithChatAction('upload_audio');
+						objToReturn = self.availableActions.sendAudio(scope, entry.val);
 					}
 				break;
 				case 'POI':
@@ -421,7 +463,7 @@ class Bot {
 					break;
 			}
 		}
-		return false;
+		return objToReturn;
 	}
 }
 
