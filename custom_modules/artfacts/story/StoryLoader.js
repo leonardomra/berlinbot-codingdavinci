@@ -21,7 +21,6 @@ class StoryLoader {
 		let self = this;
 		self.isLoaded = false;
 		self.projectId = projectId;
-		self.qts = ['time', 'image', 'extra', 'video', 'audio', 'gps', 'url'];
 		self.LoadStoryComponents(null);
 	}
 

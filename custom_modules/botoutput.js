@@ -69,7 +69,7 @@ class BotOutput {
 		}
 	}
 
-	replyWithYesNoMenu(scope, yes, no) {
+	replyWithYesNoMenu(scope, user, yes, no) {
 		//scope.replyWithChatAction('typing');
 		var yesNoMenu = Telegraf.Extra
 			.markdown()

@@ -49,14 +49,16 @@ class Brain {
 		});
 		// actions
 		self.telegraf.action('yes', (scope) => {
-			if (self.bot.currentActForMenuCallback !== undefined) {
-				self.bot.nextFact(self.bot, scope, self.bot.currentActForMenuCallback);
+			let story = self.bot.storyPerUser[scope.update.callback_query.from.id];
+			if (story.currentActForMenuCallback !== undefined) {
+				story.nextFact(story, scope, story.currentActForMenuCallback);
 			} else {
 				bug.error('No delegate for callback defined.');
 			}
 		});
 		self.telegraf.action('no', (scope) => {
-			self.bot.stopStory(scope);
+			let story = self.bot.storyPerUser[scope.update.callback_query.from.id];
+			story.stopStory(scope);
 			return scope.reply('you said no');
 		});
 		self.telegraf.action('reload', (scope) => {
@@ -74,12 +76,14 @@ class Brain {
 			}, 2000);
 		});
 		// commands
+		/*
 		self.telegraf.command('menu', (scope) => {
 			return scope.reply('will display menu...')
 			.then(function(fuck) {
 				self.out.replyWithYesNoMenu(scope);
 			});
 		});
+		*/
 		self.telegraf.command('reload', (scope) => {
 			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {

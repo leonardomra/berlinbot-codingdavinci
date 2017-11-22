@@ -25,14 +25,14 @@ class StoryManager {
 						.then(() => {
 							scope.replyWithChatAction('typing');
 							setTimeout(() => {
-								self.brain.out.replyWithYesNoMenu(scope, 'Continue', 'No, cancel the tour.');
+								self.brain.out.replyWithYesNoMenu(scope, user, 'Continue', 'No, cancel the tour.');
 							}, _delay);
 						});
 				}, _delay);
 			},
 			detectIfUserIsReadyToNextAct: function(self, scope, fact) {
 				self.currentActForMenuCallback = fact;
-				self.brain.out.replyWithYesNoMenu(scope, 'Take me to the next spot!', 'No, cancel the tour.');
+				self.brain.out.replyWithYesNoMenu(scope, user, 'Take me to the next spot!', 'No, cancel the tour.');
 			},
 			sendImage: function(scope, url) {
 				return self.brain.out.replyWithImage(scope, url);

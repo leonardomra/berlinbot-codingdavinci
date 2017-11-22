@@ -61,6 +61,7 @@ class Bot {
 		for (let key in self.loadedProjects) {
 			if (self.loadedProjects[key] === null) {
 				self.loadedProjects[key] = new StoryLoader();
+				self.loadedProjects[key].qts = self.qts;
 				self.loadedProjects[key].finishedLoading = handleFinishedLoading;
 				self.loadedProjects[key].init(key);
 				break;
@@ -79,10 +80,13 @@ class Bot {
 	startAStory(scope, stringId) {
 		let self = this;
 		console.log(scope.update.callback_query.from.id);
-		for (var i = self.loadedProjects.length - 1; i >= 0; i--) {
-			var project = self.loadedProjects[i];
+
+		for (let key in self.loadedProjects) {
+			var project = self.loadedProjects[key];
 			let subject = project.library.MainActor.objs[0];
 			let actor = subject.content.replace(/ /g,'').toLowerCase();
+			console.log(actor)
+			console.log(stringId)
 			if (actor === stringId) {
 				console.log('will start story...');
 				if (self.storyPerUser[scope.update.callback_query.from.id]) {
@@ -90,6 +94,7 @@ class Bot {
 					self.storyPerUser[scope.update.callback_query.from.id] = null;
 				}
 				self.storyPerUser[scope.update.callback_query.from.id] = new StoryManager();
+				self.storyPerUser[scope.update.callback_query.from.id].qts = self.qts;
 				self.storyPerUser[scope.update.callback_query.from.id].init(project.library, self.brain, scope.update.callback_query.from.id);
 				self.storyPerUser[scope.update.callback_query.from.id].startStory(scope);
 			}
@@ -98,7 +103,6 @@ class Bot {
 
 	initializeBotBrain(scope) {
 		let self = this;
-		console.log(self.loadedProjects);
 		if (self.brain.bot === undefined) {
 			self.brain.init();
 			self.brain.bot = self;
