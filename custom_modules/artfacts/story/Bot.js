@@ -20,6 +20,9 @@ class Bot {
 
 	wakeup() {
 		bug.artmsg('Hit from StoryFact!');
+		bug.artmsg('******* ATTENTION: Disconnected entities inside Knowledge Chunks cause the bot not to initialize ******* ');
+
+
 		let self = this;
 		self.brain = new Brain();
 		self.brain.telegraf = self.telegraf;
@@ -29,29 +32,37 @@ class Bot {
 		self.node.init();
 		self.projectId = '59faeeb23dcf640fb556b5e5';
 		self.qts = ['time', 'image', 'extra', 'video', 'audio', 'gps', 'url'];
+		self.delay = 3000;
 		self.LoadStoryComponents(null);
 	}
 
 	LoadStoryComponents(scope) {
 		let self = this;
 		self.library = {
-			'StoryFact': {class: StoryFact, objs: []},
-			'StoryAct': {class: StoryAct, objs: []},
-			'BotUser': {class: BotUser, objs: []},
-			'MainActor': {class: MainActor, objs: []},
-			'MainNarrative': {class: MainNarrative, objs: []},
-			'ActorSpeech': {class: ActorSpeech, objs: []},
-			'POI': {class: POI, objs: []},
-			'Medium': {class: Medium, objs: []},
-			'Action': {class: Action, objs: []},
+			'StoryFact': {class: StoryFact, objs: [], promiseCounter: [], finishedCounter: []},
+			'StoryAct': {class: StoryAct, objs: [], promiseCounter: [], finishedCounter: []},
+			'BotUser': {class: BotUser, objs: [], promiseCounter: [], finishedCounter: []},
+			'MainActor': {class: MainActor, objs: [], promiseCounter: [], finishedCounter: []},
+			'MainNarrative': {class: MainNarrative, objs: [], promiseCounter: [], finishedCounter: []},
+			'ActorSpeech': {class: ActorSpeech, objs: [], promiseCounter: [], finishedCounter: []},
+			'POI': {class: POI, objs: [], promiseCounter: [], finishedCounter: []},
+			'Medium': {class: Medium, objs: [], promiseCounter: [], finishedCounter: []},
+			'Action': {class: Action, objs: [], promiseCounter: [], finishedCounter: []},
 		};
+
 		function handleIds(ids, className) {
+			bug.artmsg('For ' + className + ' there are ' + ids.length + ' nodes.');
+
 			ids.forEach( function(id) {
+				//delay++;
 				var o = new self.library[className].class();
 				o.init();
 				o.instantiation = className;
 				self.library[className].objs.push(o);
+				self.library[className].promiseCounter.push(id);
 				o.loadSubjectWithID(id, function(subject) {
+					bug.artmsg(subject.label +' (' + subject.instantiation + ') was loaded!');
+					self.library[subject.instantiation].finishedCounter.push(subject.chunkId);
 					subject.factIsLoaded = true;
 					if (self.watchLibraryLoad(self.library)) {
 						bug.artmsg('------------------> Ok... I\'m half awake!'); // if I don't take up, check your knowledge chunks. There might be too many disconnected entities...
@@ -69,6 +80,19 @@ class Bot {
 		for (let key in self.library) {
 			calmLoading(key);
 		}
+		/*
+		setTimeout(function() {
+			function handleDiag(obj) {
+				if (!obj.factIsLoaded) {
+					bug.error('	' + this + ' -> problem: ' + obj.label + ' is loaded: ' + obj.factIsLoaded + ', ref: ' + obj.chunkId);
+					bug.error('	Remove empty entities.');
+				}
+			}
+			for (let key in self.library) {
+				self.library[key].objs.forEach(handleDiag.bind(key));
+			}
+		}, 10000);
+		*/
 	}
 
 	distributeFacts(scope) {
@@ -169,6 +193,11 @@ class Bot {
 			if (lib[key].objs.length !== 0) {
 				for (var i = lib[key].objs.length - 1; i >= 0; i--) {
 					if (!lib[key].objs[i].factIsLoaded) {
+						//console.log(lib[key].objs[i].label + ' not loaded');
+						if (lib[key].objs[i].label === undefined) {
+							//bug.error('Unable to load. Check Artfacts project.');
+						}
+
 						return false;
 					}
 				}
@@ -225,24 +254,28 @@ class Bot {
 		}
 		self.availableActions = {
 
-			detectLiveLocationActive: function(self, scope, fact) {
-				self.interval =  setInterval(function() {
-					if (self.brain.isStoryActive === true && self.brain.isLiveLocationActive === true) {
-						bug.artmsg('live location is active');
-						if (self.storyVerticalOrderCursor === 1 && self.storyOrder[self.storyVerticalOrderCursor].cursor === 0) {
-							clearInterval(self.interval);
-							self.nextFact(self, scope, fact);
-						}
-					} else {
-						bug.artmsg('live location is dead');
-						//self.brain.out.replyWithSimpleMessage(scope, 'Please, share your live location!');
-					}
-				}, 5000);
+			sendActLocationToUser: function(self, scope, fact) {
+				let _delay = 2000;
+				self.brain.out.replyWithSimpleMessage(scope, 'The place I wanna show you is located at ' + fact.pOIs[0].content.trim() + '! 📍');
+				let gps = fact.pOIs[0].gps.split(',');
+				let lat = gps[0];
+				let lon = gps[1];
+				scope.replyWithChatAction('typing');
+				setTimeout(() => {
+					self.currentActForMenuCallback = fact;
+					self.brain.out.sendLocation(scope, lat, lon)
+						.then(() => {
+							scope.replyWithChatAction('typing');
+							setTimeout(() => {
+								self.brain.out.replyWithYesNoMenu(scope, 'Continue', 'No, cancel the tour.');
+							}, _delay);
+						});
+				}, _delay);
 			},
 
 			detectIfUserIsReadyToNextAct: function(self, scope, fact) {
 				self.currentActForMenuCallback = fact;
-				self.brain.out.replyWithYesNoMenu(scope);
+				self.brain.out.replyWithYesNoMenu(scope, 'Take me to the next spot!', 'No, cancel the tour.');
 			},
 
 			sendImage: function(scope, url) {
@@ -296,7 +329,7 @@ class Bot {
 				self.storyOrder[0].cursor++;
 				self.storyOrder[self.storyVerticalOrderCursor].name(self, scope, fact);  // <-- exec
 			}
-		}, 500);
+		}, self.delay);
 	}
 
 	startStoryAct(self, scope) {
@@ -379,7 +412,10 @@ class Bot {
 					self.executeQuantifier(self, scope, currentSpeech, currentMedium)
 						.then(function() {
 							mediumCursor++;
-							nextMedium();
+							scope.replyWithChatAction('typing');
+							setTimeout(function() {
+								nextMedium();
+							}, self.delay);
 						});
 				}
 			} else {
@@ -392,7 +428,10 @@ class Bot {
 			if (currentAction) {
 				if (!self.executeQuantifier(self, scope, currentSpeech, currentAction)) nextSpeech();//self.nextFact(self, scope, currentStoryAct);
 			} else {
-				nextSpeech();
+				scope.replyWithChatAction('typing');
+				setTimeout(function() {
+					nextSpeech();
+				}, self.delay);
 			}
 		}
 		function abort() {
@@ -431,15 +470,17 @@ class Bot {
 			let entry = toBePerformedList[j];
 			switch (entry.ins) {
 				case 'Action':
-				try {
-					self.availableActions[entry.val](self, scope, fact);
-					objToReturn = true;
-				} catch(e) {
-					// statements
-					bug.error('Your instantiation might be wrong');
-					self.brain.out.replyWithSimpleMessage(scope, 'My developer told me to tell you that you should check the instantiation for ' + subject.content);
-					objToReturn = false;
-				}
+					scope.replyWithChatAction('typing');
+					try {
+						self.availableActions[entry.val](self, scope, fact);
+						objToReturn = true;
+					} catch(e) {
+						// statements
+						bug.error('Your instantiation might be wrong');
+						bug.error(e);
+						self.brain.out.replyWithSimpleMessage(scope, 'My developer told me to tell you that you should check the instantiation for ' + subject.content);
+						objToReturn = false;
+					}
 				break;
 				case 'Medium':
 					if (entry.qt === 'image') {

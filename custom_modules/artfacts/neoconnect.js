@@ -41,16 +41,16 @@ class NeoConnect {
 				if (err) {
 					//throw err;
 					console.log('ERROR FROM NEO4J. Trying execute query ' + queryString);
-					bug.error(err);
+					//bug.error(err);
 					bug.error('Will handle error...');
 					tryAgain();
 					//responseCallback(null);
 				} else {
 					try {
-						console.log('Connection with Artfacts succeeded for ' + Object.keys(response[0])[0]);
+						//console.log('Connection with Artfacts succeeded for ' + Object.keys(response[0])[0]);
 					} catch(e) {
 						//console.log(e);
-						console.log('Connection with Artfacts succeeded!');
+						//console.log('Connection with Artfacts succeeded!');
 					}
 					responseCallback(response);
 				}

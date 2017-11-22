@@ -7,6 +7,11 @@ const Telegraf = require('telegraf');
 
 class BotOutput {
 
+	sendLocation(scope, lat, lon) {
+		let self = this;
+		return self.brain.telegraf.telegram.sendLocation(scope.update.callback_query.message.chat.id, lat, lon);
+	}
+
 	replyWithImage(scope, imageUrl) {
 		//scope.replyWithChatAction('upload_photo');
 		return scope.replyWithPhoto(imageUrl);
@@ -23,7 +28,8 @@ class BotOutput {
 
 	replyWithAudio(scope, audioUrl) {
 		//scope.replyWithChatAction('upload_audio');
-		return scope.replyWithAudio({ url: audioUrl });
+		//return scope.replyWithAudio({ url: audioUrl });
+		return scope.replyWithVoice({ url: audioUrl });
 	}
 
 	replyWithSimpleMessage(scope, message) {
@@ -54,17 +60,27 @@ class BotOutput {
 		return options;
 	}
 
-	replyWithYesNoMenu(scope) {
+	replyWithYesNoMenu(scope, yes, no) {
 		//scope.replyWithChatAction('typing');
 		var yesNoMenu = Telegraf.Extra
 			.markdown()
 			.markup((m) => m.inlineKeyboard([
-				[m.callbackButton('Take me to the next spot!', 'yes'), m.callbackButton('No, cancel the tour.', 'no')]
+				[m.callbackButton(yes, 'yes'), m.callbackButton(no, 'no')]
 			]).resize());
-		return scope.reply('Please, let me know when you are ready to go on...', yesNoMenu);
+		return scope.reply('Please, let me know when you are ready to go on! 👇', yesNoMenu);
 	}
 
 	replyWithStolpersteinYesNoMenu(scope, person) {
+		var yesNoMenu = Telegraf.Extra
+			.markdown()
+			.markup((m) => m.inlineKeyboard([
+				[m.callbackButton('View address on the map...', 'goToStolperstein'), m.callbackButton('No!', 'abortStolperstein')]
+			]).resize());
+		return scope.reply('There is a "Stolperstein" with his/her name. Would you like to visit it?', yesNoMenu);
+
+
+		/*
+
 		scope.runInlineMenu({
 			layout: 2, //some layouting here
 			method: 'sendMessage', //here you must pass the method name
@@ -88,6 +104,7 @@ class BotOutput {
 				}
 			]
 		});
+		*/
 	}
 
 	replyWithShortDescription(scope, person) {
@@ -123,7 +140,7 @@ class BotOutput {
 		const aboutMenu = Telegraf.Extra
 			.markdown()
 			.markup((m) => m.keyboard([
-				[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help'), m.callbackButton('Reload! 🔃', 'reload')]
+				[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help')]
 			]).resize());
 		return scope.reply('Welcome text!', aboutMenu);
 	}
@@ -146,7 +163,7 @@ class BotOutput {
 				let bts = [];
 				reply.forEach((subject) => {
 					let _action = subject.content.replace(/ /g,'').toLowerCase();
-					bts.push(m.callbackButton(subject.content, _action));
+					bts.push(m.callbackButton('The story of ' + subject.content, _action));
 					self.brain.telegraf.action(_action, (scope) => {
 						//scope.answerCallbackQuery('Please, share your live location!');
 						self.brain.bot.startStory(scope, _action);

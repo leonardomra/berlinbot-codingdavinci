@@ -35,24 +35,7 @@ class Brain {
 		self.isLiveLocationActive = false;
 		self.locationReplyCounter = 0;
 		self.locationEmitter = new EventEmitter();
-
-		/*
-		var otherwise = new OtherwiseController();
-		otherwise.in = self.in;
-		otherwise.grabReply = function (reply, scope) {
-			self.manageIntent(reply, scope);
-		};
-		var command = new CommandController();
-		command.out = self.out;
-		command.brain = self;
-		*/
 		self.startTelegrafRouters();
-		/*
-		self.telegram.router
-			.when(new TextCommand('/start', 'welcomeCommand'), command)
-			.when(new TextCommand('/tour', 'takeTour'), command)
-			.otherwise(otherwise);
-		*/
 	}
 
 	/**
@@ -61,16 +44,15 @@ class Brain {
 	startTelegrafRouters() {
 		let self = this;
 		self.telegraf.start((scope) => {
-			return self.out.replyWithWelcomeMessage(scope);
+			return self.out.replyWithWelcomeMessage(scope)
+				.then((info) => console.log(info));
 		});
-		
 		// actions
-		
 		self.telegraf.action('yes', (scope) => {
 			if (self.bot.currentActForMenuCallback !== undefined) {
 				self.bot.nextFact(self.bot, scope, self.bot.currentActForMenuCallback);
 			} else {
-				bug.error('No currentActForMenuCallback defined.');
+				bug.error('No delegate for callback defined.');
 			}
 		});
 		self.telegraf.action('no', (scope) => {
@@ -80,9 +62,18 @@ class Brain {
 		self.telegraf.action('reload', (scope) => {
 			return scope.reply('you said reload');
 		});
+		self.telegraf.action('goToStolperstein', (scope) => {
 
+			self.out.replyWithSimpleMessage(scope, 'I\'ll show you where it is! Just a second...');
+			scope.replyWithChatAction('typing');
+			setTimeout(() => {
+				if (self.out.targetPerson.aggregates.lived_at !== undefined) {
+					let coords = self.out.targetPerson.aggregates.lived_at.gps.split(',');
+					scope.replyWithLocation(coords[0], coords[1]);
+				}
+			}, 2000);
+		});
 		// commands
-		
 		self.telegraf.command('menu', (scope) => {
 			return scope.reply('will display menu...')
 			.then(function(fuck) {
@@ -108,6 +99,25 @@ class Brain {
 			self.isStoryActive = false;
 			return scope.reply('You decided to quit the tour. See you next time!');
 		});
+		/*
+		self.telegraf.command('loc', (scope) => {
+			let lat = 53.0;
+			let lon = 8.8;
+			//self.telegraf.telegram.sendLocation(scope.update.message.chat.id, lat, lon, { live_period: 60 })
+			self.telegraf.telegram.sendLocation(scope.update.message.chat.id, lat, lon)
+				.then((message) => {
+					const timer = setInterval(() => {
+						lat += Math.random() * 0.001;
+						lon += Math.random() * 0.001;
+						self.telegraf.telegram.editMessageLiveLocation(lat, lon, message.chat.id, message.message_id)
+							.catch(() => clearInterval(timer));
+					}, 1000);
+				})
+				.catch((e) => {
+					console.log(e);
+				});
+		});
+		*/
 		// regular text
 		self.telegraf.on('text', (scope) => {
 			self.in.init(scope, scope.message, 'text');
@@ -117,12 +127,26 @@ class Brain {
 		});
 		// location
 		self.telegraf.on('location', (scope) => {
+			console.log('inside location');
+
 			self.in.init(scope, scope.message, 'location');
 			self.in.analyseMessage(function(reply) {
 				self.manageIntent(reply, scope);
 			});
 		});
-		self.telegraf.startWebhook(self.hook, null, self.port);
+		//self.monitorLocation();
+	}
+
+	monitorLocation() {
+		let self = this;
+		if (self.timeOutLocationActive === undefined) {
+			self.timeOutLocationActive = setInterval(function() {
+				self.locationReplyCounter++;
+				bug.artmsg('isLiveLocationActive will be reset... ' + self.locationReplyCounter);
+				self.isLiveLocationActive = false;
+				//self.timeOutLocationActive = undefined;
+			}, 1000);
+		}
 	}
 
 	/**
@@ -196,14 +220,10 @@ class Brain {
 	identifyLocationIntent(reply, scope) {
 		let self = this;
 		self.isLiveLocationActive = true;
-		self.locationReplyCounter++;
-		if (self.timeOutLocationActive === undefined) {
-			self.timeOutLocationActive = setTimeout(function() {
-				bug.artmsg('isLiveLocationActive will be reset... ' + self.locationReplyCounter);
-				self.isLiveLocationActive = false;
-				self.timeOutLocationActive = undefined;
-			}, 120000);
-		}
+		clearInterval(self.timeOutLocationActive);
+		self.timeOutLocationActive = undefined;
+		self.locationReplyCounter = 0;
+		self.monitorLocation();
 		if (!self.isStoryActive) {
 			self.out.replyWithSimpleMessage(scope, reply.text);
 		} else {
@@ -231,6 +251,7 @@ class Brain {
 							try {
 								if (Object.keys(p.aggregates).length !== 0) {
 									self.out.replyWithShortDescription(scope, p);
+									self.out.targetPerson = p;
 									self.out.replyWithStolpersteinYesNoMenu(scope, p);
 								} else {
 									self.out.replyWithSimpleVictimStatement(scope, p);
