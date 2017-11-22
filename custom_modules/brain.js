@@ -83,7 +83,7 @@ class Brain {
 		self.telegraf.command('reload', (scope) => {
 			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {
-				self.bot.LoadStoryComponents(scope);
+				self.bot.reloadStories(scope);
 			});
 		});
 		self.telegraf.command('help', (scope) => {
@@ -209,7 +209,14 @@ class Brain {
 	*/
 	identifyTourIntent(reply, scope) {
 		let self = this;
-		self.out.replyWithMenuTourMessage(scope, self.bot.library.MainActor.objs);
+
+		let actors = [];
+
+		for (let key in self.bot.loadedProjects) {
+			let project = self.bot.loadedProjects[key];
+			actors.push(project.library.MainActor.objs[0]);
+		}
+		self.out.replyWithMenuTourMessage(scope, actors);
 	}
 
 	/**

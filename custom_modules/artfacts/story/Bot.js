@@ -4,39 +4,114 @@
 
 const bug = require('./../../mydebugger');
 const Brain = require('./../../brain');
-const Node = require('./../node');
-const KnowledgeChunk = require('./../knowledgechunk');
-const StoryAct = require('./StoryAct');
-const StoryFact = require('./StoryFact');
-const MainActor = require('./Actor');
-const BotUser = require('./BotUser');
-const MainNarrative = require('./MainNarrative');
-const ActorSpeech = require('./ActorSpeech');
-const POI = require('./POI');
-const Medium = require('./Medium');
-const Action = require('./Action');
+
+//const KnowledgeChunk = require('./../knowledgechunk');
+//
+//const Node = require('./../node');
+//const StoryAct = require('./StoryAct');
+//const StoryFact = require('./StoryFact');
+//const MainActor = require('./Actor');
+//const BotUser = require('./BotUser');
+//const MainNarrative = require('./MainNarrative');
+//const ActorSpeech = require('./ActorSpeech');
+//const POI = require('./POI');
+//const Medium = require('./Medium');
+//const Action = require('./Action');
+//
+const StoryLoader = require('./StoryLoader');
+const StoryManager = require('./StoryManager');
 
 class Bot {
 
 	wakeup() {
-		bug.artmsg('Hit from StoryFact!');
-		bug.artmsg('******* ATTENTION: Disconnected entities inside Knowledge Chunks cause the bot not to initialize ******* ');
-
-
+		bug.artmsg('Hit from Bot!');
 		let self = this;
 		self.brain = new Brain();
 		self.brain.telegraf = self.telegraf;
 		self.brain.hook = self.hook;
 		self.brain.port = self.port;
-		self.node = new Node();
-		self.node.init();
-		self.projectId = '59faeeb23dcf640fb556b5e5';
+		//self.projectId = '59faeeb23dcf640fb556b5e5';
 		self.qts = ['time', 'image', 'extra', 'video', 'audio', 'gps', 'url'];
 		self.delay = 3000;
-		self.LoadStoryComponents(null);
+		self.loadedProjects = {
+			'59faeeb23dcf640fb556b5e5': null,
+			'5a154a7909a3ae5bcadea2ba': null
+		};
+		self.storyPerUser = {};
+		self.loadNextProject(null);
 	}
 
-	LoadStoryComponents(scope) {
+	loadNextProject(scope) {
+		let self = this;
+		function handleFinishedLoading(m) {
+			bug.artmsg(m);
+			let index = 0;
+			for (let id in self.loadedProjects) {
+				if (self.loadedProjects[id] === null) index++;
+			}
+			if (index !== 0) {
+				bug.artmsg('will wait 10 seconds before loading next project. Please, wait...');
+				setTimeout(() => {
+					self.loadNextProject(scope);
+				}, 10000);
+			} else {
+				self.initializeBotBrain(scope);
+			}
+		}
+		for (let key in self.loadedProjects) {
+			if (self.loadedProjects[key] === null) {
+				self.loadedProjects[key] = new StoryLoader();
+				self.loadedProjects[key].finishedLoading = handleFinishedLoading;
+				self.loadedProjects[key].init(key);
+				break;
+			}
+		}
+	}
+
+	reloadStories(scope) {
+		let self = this;
+		for (let id in self.loadedProjects) {
+			self.loadedProjects[id] = null;
+		}
+		self.loadNextProject(scope);
+	}
+
+	startAStory(scope, stringId) {
+		let self = this;
+		console.log(scope.update.callback_query.from.id);
+		for (var i = self.loadedProjects.length - 1; i >= 0; i--) {
+			var project = self.loadedProjects[i];
+			let subject = project.library.MainActor.objs[0];
+			let actor = subject.content.replace(/ /g,'').toLowerCase();
+			if (actor === stringId) {
+				console.log('will start story...');
+				if (self.storyPerUser[scope.update.callback_query.from.id]) {
+					self.storyPerUser[scope.update.callback_query.from.id].stopStory(scope, null);
+					self.storyPerUser[scope.update.callback_query.from.id] = null;
+				}
+				self.storyPerUser[scope.update.callback_query.from.id] = new StoryManager();
+				self.storyPerUser[scope.update.callback_query.from.id].init(project.library, self.brain, scope.update.callback_query.from.id);
+				self.storyPerUser[scope.update.callback_query.from.id].startStory(scope);
+			}
+		}
+	}
+
+	initializeBotBrain(scope) {
+		let self = this;
+		console.log(self.loadedProjects);
+		if (self.brain.bot === undefined) {
+			self.brain.init();
+			self.brain.bot = self;
+			//self.brain.out.replyWithSimpleMessage(scope, 'What can I do for you?!');
+			bug.artmsg('Brain will get 💊');
+		} else {
+			bug.artmsg('Brain is already fed.');
+			self.brain.out.replyWithSimpleMessage(scope, 'Taste me! 🌶');
+		}
+	}
+
+/*
+	loadStoryComponents(scope) {
 		let self = this;
 		self.library = {
 			'StoryFact': {class: StoryFact, objs: [], promiseCounter: [], finishedCounter: []},
@@ -80,19 +155,6 @@ class Bot {
 		for (let key in self.library) {
 			calmLoading(key);
 		}
-		/*
-		setTimeout(function() {
-			function handleDiag(obj) {
-				if (!obj.factIsLoaded) {
-					bug.error('	' + this + ' -> problem: ' + obj.label + ' is loaded: ' + obj.factIsLoaded + ', ref: ' + obj.chunkId);
-					bug.error('	Remove empty entities.');
-				}
-			}
-			for (let key in self.library) {
-				self.library[key].objs.forEach(handleDiag.bind(key));
-			}
-		}, 10000);
-		*/
 	}
 
 	distributeFacts(scope) {
@@ -140,19 +202,6 @@ class Bot {
 		}
 	}
 
-	initializeBotBrain(scope) {
-		let self = this;
-		if (self.brain.bot === undefined) {
-			self.brain.init();
-			self.brain.bot = self;
-			//self.brain.out.replyWithSimpleMessage(scope, 'What can I do for you?!');
-			bug.artmsg('Brain will get 💊');
-		} else {
-			bug.artmsg('Brain is already fed.');
-			self.brain.out.replyWithSimpleMessage(scope, 'Taste me! 🌶');
-		}
-	}
-
 	compareLinksAndAddObjects(subject, objects, _key) {
 		objects.forEach( function(object) {
 			subject.knowledgeEntities.forEach( function(entity) {
@@ -166,6 +215,7 @@ class Bot {
 			});
 		});
 	}
+*/
 
 	//*******************************************/
 	//
@@ -173,6 +223,7 @@ class Bot {
 	//
 	//*******************************************/
 
+/*
 	watchQuantifierLoad(lib, qts) {
 		for (let key in lib) {
 			if (lib[key].objs.length !== 0) {
@@ -205,13 +256,13 @@ class Bot {
 		}
 		return true;
 	}
-
+*/
 	//*******************************************/
 	//
 	// Manage Stories
 	//
 	//*******************************************/
-
+/*
 	sortFacts(list) {
 		let self = this;
 		list = list.sort(self.compareFacts);
@@ -506,6 +557,7 @@ class Bot {
 		}
 		return objToReturn;
 	}
+*/
 }
 
 module.exports = Bot;

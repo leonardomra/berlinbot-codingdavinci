@@ -23,7 +23,7 @@ class NeoConnect {
 		var tryCounter = 0;
 		function tryAgain() {
 			if (tryCounter < 100) {
-				console.log('will try again...' + tryCounter);
+				bug.msg('will try again...' + tryCounter);
 				setTimeout(function() {
 					execute();
 				}, 5000);
@@ -39,9 +39,12 @@ class NeoConnect {
 				params: {},
 			}, function(err, response) {
 				if (err) {
-					//throw err;
-					console.log('ERROR FROM NEO4J. Trying execute query ' + queryString);
-					//bug.error(err);
+					if (tryCounter > 4) {
+						bug.error('ERROR FROM NEO4J. Trying execute query ' + queryString);
+						bug.error(err);
+					} else {
+						bug.error('ERROR FROM NEO4J. Trying execute query got bad response.');
+					}
 					bug.error('Will handle error...');
 					tryAgain();
 					//responseCallback(null);

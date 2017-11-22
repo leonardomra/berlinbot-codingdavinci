@@ -2,7 +2,7 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-const Bug = require('./mydebugger');
+const bug = require('./mydebugger');
 const Telegraf = require('telegraf');
 
 class BotOutput {
@@ -34,7 +34,11 @@ class BotOutput {
 
 	replyWithSimpleMessage(scope, message) {
 		//scope.replyWithChatAction('typing');
-		return scope.reply(message);
+		try {
+			return scope.reply(message);
+		} catch(e) {
+			bug.error(e);
+		}
 	}
 
 	replyWithPersonNotFound(scope) {
@@ -50,14 +54,19 @@ class BotOutput {
 	replyWithMultiplePeopleOptionList(scope, entry, people) {
 		let entities = '';
 		let options = [];
-		people.forEach( function(person, index) {
-			options[index] = person;
-			entities = entities + '/' + (index) + ' ' + person.name + '\n';
-		});
-		let botMsg = 'I\'m not sure. There are ' + people.length + ' entries with the name of ' + entry + '. Could you be more specific? \n';
-		botMsg += entities;
-		scope.reply(botMsg);
-		return options;
+		try {
+			people.forEach( function(person, index) {
+				options[index] = person;
+				entities = entities + '/' + (index) + ' ' + person.name + '\n';
+			});
+			let botMsg = 'I\'m not sure. There are ' + people.length + ' entries with the name of ' + entry + '. Could you be more specific? \n';
+			botMsg += entities;
+			scope.reply(botMsg);
+			return options;
+		} catch(e) {
+			bug.error(e);
+			scope.reply('The developer told me to tell you that in one of your projects there is no main actor');
+		}
 	}
 
 	replyWithYesNoMenu(scope, yes, no) {
@@ -157,21 +166,26 @@ class BotOutput {
 	replyWithMenuTourMessage(scope, reply) {
 		let self = this;
 		//scope.replyWithChatAction('typing');
-		const testMenu = Telegraf.Extra
-			.markdown()
-			.markup((m) => {
-				let bts = [];
-				reply.forEach((subject) => {
-					let _action = subject.content.replace(/ /g,'').toLowerCase();
-					bts.push(m.callbackButton('The story of ' + subject.content, _action));
-					self.brain.telegraf.action(_action, (scope) => {
-						//scope.answerCallbackQuery('Please, share your live location!');
-						self.brain.bot.startStory(scope, _action);
+		try {
+			const testMenu = Telegraf.Extra
+				.markdown()
+				.markup((m) => {
+					let bts = [];
+					reply.forEach((subject) => {
+						let _action = subject.content.replace(/ /g,'').toLowerCase();
+						bts.push([m.callbackButton('The story of ' + subject.content, _action)]);
+						self.brain.telegraf.action(_action, (scope) => {
+							//scope.answerCallbackQuery('Please, share your live location!');
+							self.brain.bot.startAStory(scope, _action);
+						});
 					});
+					return m.inlineKeyboard(bts);
 				});
-				return m.inlineKeyboard(bts);
-			});
-		scope.reply('I have the following tours for you! Please choose one!', testMenu);
+			scope.reply('I have the following tours for you! Please choose one!', testMenu);
+		} catch(e) {
+			bug.error(e);
+			scope.reply('The developer told me to tell you that in one of your projects there is no main actor');
+		}
 	}
 }
 
