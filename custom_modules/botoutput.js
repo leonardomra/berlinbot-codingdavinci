@@ -7,9 +7,10 @@ const Telegraf = require('telegraf');
 
 class BotOutput {
 
-	sendLocation(scope, lat, lon) {
+	sendLocation(scope, lat, lon, title, address) {
 		let self = this;
-		return self.brain.telegraf.telegram.sendLocation(scope.update.callback_query.message.chat.id, lat, lon);
+		return self.brain.telegraf.telegram.sendVenue(scope.update.callback_query.message.chat.id, lat, lon, title, address);
+		//return self.brain.telegraf.telegram.sendLocation(scope.update.callback_query.message.chat.id, lat, lon);
 	}
 
 	replyWithImage(scope, imageUrl) {

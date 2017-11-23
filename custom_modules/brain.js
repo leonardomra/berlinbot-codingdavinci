@@ -7,17 +7,13 @@
 * @module custom_modules/part
 */
 
-const Telegram = require('telegram-node-bot');
-const TelegramBaseController = Telegram.TelegramBaseController;
-const TextCommand = Telegram.TextCommand;
 const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
-//const Node = require('./artfacts/node');
 const BotOutput = require('./botoutput');
 const bug = require('./mydebugger');
 const EventEmitter = require('events');
-/** Class representing a part of a story. */
 
+/** Class representing a part of a story. */
 class Brain {
 
 	/**
@@ -65,7 +61,6 @@ class Brain {
 			return scope.reply('you said reload');
 		});
 		self.telegraf.action('goToStolperstein', (scope) => {
-
 			self.out.replyWithSimpleMessage(scope, 'I\'ll show you where it is! Just a second...');
 			scope.replyWithChatAction('typing');
 			setTimeout(() => {
@@ -76,14 +71,6 @@ class Brain {
 			}, 2000);
 		});
 		// commands
-		/*
-		self.telegraf.command('menu', (scope) => {
-			return scope.reply('will display menu...')
-			.then(function(fuck) {
-				self.out.replyWithYesNoMenu(scope);
-			});
-		});
-		*/
 		self.telegraf.command('reload', (scope) => {
 			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {
@@ -132,7 +119,6 @@ class Brain {
 		// location
 		self.telegraf.on('location', (scope) => {
 			console.log('inside location');
-
 			self.in.init(scope, scope.message, 'location');
 			self.in.analyseMessage(function(reply) {
 				self.manageIntent(reply, scope);
@@ -320,35 +306,3 @@ class Brain {
 }
 
 module.exports = Brain;
-
-/** Class for handling unpredicted messages coming from the Telegram API. */
-class OtherwiseController extends TelegramBaseController {
-
-	handle($) {
-		let self = this;
-		self.in.init($, $._message);
-		self.in.analyseMessage(function(reply) {
-			self.grabReply(reply, $);
-		});
-	}
-}
-
-/** Class for handling certain kinds of commands coming from the Telegram API. */
-class CommandController extends TelegramBaseController {
-
-	welcomeHandler($) {
-		this.out.replyWithWelcomeMessage($);
-	}
-
-	takeTourHandler($) {
-		this.brain.identifyTourIntent(null, $);
-		//this.out.replyWithTourMessage($);
-	}
-
-	get routes() {
-		return {
-			'welcomeCommand': 'welcomeHandler',
-			'takeTour': 'takeTourHandler',
-		};
-	}
-}

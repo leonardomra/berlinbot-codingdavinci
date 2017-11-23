@@ -11,17 +11,18 @@ class StoryManager {
 		self.user = user;
 		self.library = library;
 		self.brain = brain;
+		self.delay = 3000;
 		self.availableActions = {
 			sendActLocationToUser: function(self, scope, fact) {
 				let _delay = 2000;
-				self.brain.out.replyWithSimpleMessage(scope, 'The place I wanna show you is located at ' + fact.pOIs[0].content.trim() + '! 📍');
+				//self.brain.out.replyWithSimpleMessage(scope, 'The place I wanna show you is located at ' + fact.pOIs[0].content.trim() + '! 📍');
 				let gps = fact.pOIs[0].gps.split(',');
 				let lat = gps[0];
 				let lon = gps[1];
 				scope.replyWithChatAction('typing');
 				setTimeout(() => {
 					self.currentActForMenuCallback = fact;
-					self.brain.out.sendLocation(scope, lat, lon)
+					self.brain.out.sendLocation(scope, lat, lon, fact.pOIs[0].content.trim(), fact.pOIs[0].label.trim())
 						.then(() => {
 							scope.replyWithChatAction('typing');
 							setTimeout(() => {
