@@ -39,10 +39,10 @@ class Bot {
 				if (self.loadedProjects[id] === null) index++;
 			}
 			if (index !== 0) {
-				bug.artmsg('will wait 10 seconds before loading next project. Please, wait...');
+				bug.artmsg('will wait 3 seconds before loading next project. Please, wait...');
 				setTimeout(() => {
 					self.loadNextProject(scope);
-				}, 10000);
+				}, 3000);
 			} else {
 				self.initializeBotBrain(scope);
 			}
