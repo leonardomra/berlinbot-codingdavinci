@@ -174,6 +174,7 @@ class StoryManager {
 	startSpeech(self, scope, currentStoryAct) {
 		let speeches, currentSpeech, mediumCursor;
 		function nextSpeech() {
+			mediumCursor = 0;
 			if (self.storyOrder[self.storyVerticalOrderCursor].cursor < speeches.length) {
 				scope.replyWithChatAction('typing');
 				currentSpeech = speeches[self.storyOrder[self.storyVerticalOrderCursor].cursor];
@@ -197,6 +198,10 @@ class StoryManager {
 			}
 		}
 		function nextMedium() {
+			console.log('will send medium');
+			console.log(mediumCursor)
+			console.log(currentSpeech.mediums.length)
+			console.log(currentSpeech.mediums)
 			if (mediumCursor < currentSpeech.mediums.length) {
 				let currentMedium = currentSpeech.mediums[mediumCursor];
 				if (currentMedium) {
