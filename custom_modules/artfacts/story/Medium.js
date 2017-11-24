@@ -12,7 +12,6 @@ class Medium extends KnowledgeChunk {
 		let self = this;
 		self.factIsLoaded = false;
 	}
-
 }
 
 module.exports = Medium;

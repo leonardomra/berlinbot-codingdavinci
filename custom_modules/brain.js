@@ -7,10 +7,13 @@
 * @module custom_modules/part
 */
 
+const bug = require('./mydebugger');
 const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
 const BotOutput = require('./botoutput');
-const bug = require('./mydebugger');
+const BotUser = require('./artfacts/story/BotUser');
+const listOfPOIs = require('./../data/schools_coords');
+const PoiDist = require('./poidist');
 const EventEmitter = require('events');
 
 /** Class representing a part of a story. */
@@ -40,10 +43,14 @@ class Brain {
 	startTelegrafRouters() {
 		let self = this;
 		self.telegraf.start((scope) => {
+			self.bot.users[scope.update.message.from.id] = new BotUser();
+			self.bot.users[scope.update.message.from.id].init(scope.update.message.from.id, scope.update.message.from.first_name);
 			return self.out.replyWithWelcomeMessage(scope)
-				.then((info) => console.log(info));
+				.then(info => null)
+				.catch(error => console.log(error));
 		});
-		// actions
+
+		// actions --------------------------------------------------------------------------------
 		self.telegraf.action('yes', (scope) => {
 			let story = self.bot.storyPerUser[scope.update.callback_query.from.id];
 			if (story.currentActForMenuCallback !== undefined) {
@@ -70,7 +77,7 @@ class Brain {
 				}
 			}, 2000);
 		});
-		// commands
+		// commands --------------------------------------------------------------------------------
 		self.telegraf.command('reload', (scope) => {
 			return scope.reply('You want me to reload. Please, make sure your Artfacts project is consistent. Just a second! I will let you know when I\'m ready... ⏰')
 			.then(function(fuck) {
@@ -109,14 +116,26 @@ class Brain {
 				});
 		});
 		*/
-		// regular text
+		// hears --------------------------------------------------------------------------------
+		self.telegraf.hears('Take a tour! 🚶', scope => {
+			self.manageIntent({intention: 'Identify Tour', bot: 'I\'ll organize your tour. Just a second...'}, scope);
+		});
+		self.telegraf.hears('Around me! 🗺️', scope => {
+			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
+		});
+		self.telegraf.hears('Help! 🤔', scope => {
+			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
+			scope.reply('You need help! Here is what I can do for you...');
+		});
+
+		// regular text --------------------------------------------------------------------------------
 		self.telegraf.on('text', (scope) => {
 			self.in.init(scope, scope.message, 'text');
 			self.in.analyseMessage(function(reply) {
 				self.manageIntent(reply, scope);
 			});
 		});
-		// location
+		// location --------------------------------------------------------------------------------
 		self.telegraf.on('location', (scope) => {
 			console.log('inside location');
 			self.in.init(scope, scope.message, 'location');
@@ -124,7 +143,13 @@ class Brain {
 				self.manageIntent(reply, scope);
 			});
 		});
-		//self.monitorLocation();
+		self.telegraf.on('edited_message', (scope) => {
+			console.log('inside edited_message');
+			self.in.init(scope, scope.update, 'location');
+			self.in.analyseMessage(function(reply) {
+				self.manageIntent(reply, scope);
+			});
+		});
 	}
 
 	monitorLocation() {
@@ -148,8 +173,11 @@ class Brain {
 		let self = this;
 		bug.msg(reply.intention);
 		switch (reply.intention) {
-			case 'Indentify Person':
-				self.indentifyPersonIntent(reply, scope);
+			case 'Identify Help':
+				self.identifyHelpIntent(reply, scope);
+				break;
+			case 'Identify Person':
+				self.identifyPersonIntent(reply, scope);
 				break;
 			case 'Identify Option':
 				self.identifyOptionIntent(reply, scope);
@@ -193,15 +221,23 @@ class Brain {
 	}
 
 	/**
+	* Handle Identify Help Intent
+	* @param {object} reply - reply from Dialogflow API.
+	* @param {object} scope - scope from Telegram API.
+	*/
+	identifyHelpIntent(reply, scope) {
+		let self = this;
+		self.out.replyWithSimpleMessage(scope, reply.bot);
+	}
+
+	/**
 	* Handle Identify Tour Intent
 	* @param {object} reply - reply from Dialogflow API.
 	* @param {object} scope - scope from Telegram API.
 	*/
 	identifyTourIntent(reply, scope) {
 		let self = this;
-
 		let actors = [];
-
 		for (let key in self.bot.loadedProjects) {
 			let project = self.bot.loadedProjects[key];
 			actors.push(project.library.MainActor.objs[0]);
@@ -216,17 +252,54 @@ class Brain {
 	*/
 	identifyLocationIntent(reply, scope) {
 		let self = this;
-		self.isLiveLocationActive = true;
-		clearInterval(self.timeOutLocationActive);
-		self.timeOutLocationActive = undefined;
-		self.locationReplyCounter = 0;
-		self.monitorLocation();
-		if (!self.isStoryActive) {
-			self.out.replyWithSimpleMessage(scope, reply.text);
+		let user;
+		let message;
+		if (scope['message']) {
+			message = scope.message;
+		} else if (scope['update']) {
+			message = scope.update.edited_message;
+		}
+		if (!self.bot.users[message.from.id]) {
+			self.bot.users[message.from.id] = new BotUser();
+			user = self.bot.users[message.from.id];
+			user.init(message.from.id, message.from.first_name);
 		} else {
-			// move next
-			self.locationEmitter.emit('GOT_LOCATION');
-			//self.bot.
+			user = self.bot.users[message.from.id];
+		}
+		user.userLocation.location = reply.loc;
+		let told = user.userLocation.getToldLocations();
+		let locations = user.userLocation.getPOIs();
+		console.log(told);
+		locations.near.forEach(function(poi) {
+			let shouldInform = true;
+			for (let toldAddress in told) {
+				if (toldAddress === poi[0]) {
+					shouldInform = false;
+					break;
+				}
+			}
+			if (shouldInform) {
+				self.out.replyWithSimpleMessage(scope, 'You are currently at ' + poi[0] + '. In this address...');
+				self.out.sendLocation(scope, self.telegraf, poi[1][0], poi[1][1], 'the address of someone', poi[0]);
+			}
+		});
+		let advised = user.userLocation.getAdvisedLocations();
+		if (Object.keys(advised).length > 0) {
+			let otherLocationsMessage = 'The other following address are around: \n';
+			let stringToCompare = otherLocationsMessage;
+			for (let address in advised) {
+				if (advised[address][0] === false) {
+					let shouldInform = true;
+					for (let toldAddress in told) {
+						if (toldAddress === address) {
+							shouldInform = false;
+							break;
+						}
+					}
+					if (shouldInform) otherLocationsMessage += address + '\n';
+				}
+			}
+			if (otherLocationsMessage !== stringToCompare) self.out.replyWithSimpleMessage(scope, otherLocationsMessage);
 		}
 	}
 
@@ -269,7 +342,7 @@ class Brain {
 	* @param {object} reply - reply from Dialogflow API.
 	* @param {object} scope - scope from Telegram API.
 	*/
-	indentifyPersonIntent(reply, scope) {
+	identifyPersonIntent(reply, scope) {
 		let self = this;
 		if (!Array.isArray(reply.entities)) {
 			// is dict

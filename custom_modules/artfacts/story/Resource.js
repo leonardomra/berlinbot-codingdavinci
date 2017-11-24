@@ -2,10 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
-
-class Model {
+class Resource {
 
 }
 
-module.exports = Model;
+module.exports = Resource;

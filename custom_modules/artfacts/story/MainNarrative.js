@@ -16,7 +16,6 @@ class MainNarrative extends KnowledgeChunk {
 		self.actions = [];
 		self.actionsAreLoaded = false;
 	}
-
 }
 
 module.exports = MainNarrative;

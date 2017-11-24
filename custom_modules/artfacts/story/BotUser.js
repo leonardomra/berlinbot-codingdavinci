@@ -3,14 +3,17 @@
 /* jshint node: true */
 
 const bug = require('./../../mydebugger');
-const KnowledgeChunk = require('./../knowledgechunk');
+const UserLocation = require('./UserLocation');
 
-class BotUser extends KnowledgeChunk {
+class BotUser {
 
-	init() {
-		super.init();
+	init(id, first_name) {
 		let self = this;
 		self.factIsLoaded = false;
+		self.first_name = first_name;
+		self.id = id;
+		self.userLocation = new UserLocation();
+		self.userLocation.init(self);
 	}
 }
 

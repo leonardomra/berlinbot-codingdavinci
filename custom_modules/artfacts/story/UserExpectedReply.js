@@ -2,10 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
-
-class Model {
+class UserExpectedReply {
 
 }
 
-module.exports = Model;
+module.exports = UserExpectedReply;

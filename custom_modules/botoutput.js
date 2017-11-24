@@ -7,10 +7,18 @@ const Telegraf = require('telegraf');
 
 class BotOutput {
 
-	sendLocation(scope, lat, lon, title, address) {
-		let self = this;
-		return self.brain.telegraf.telegram.sendVenue(scope.update.callback_query.message.chat.id, lat, lon, title, address);
-		//return self.brain.telegraf.telegram.sendLocation(scope.update.callback_query.message.chat.id, lat, lon);
+	sendLocation(scope, telegraf, lat, lon, title, address) {
+		let id;
+		if (scope['message']) {
+			id = scope.message.chat.id;
+		} else if (scope['update']) {
+			if (scope.update['edited_message']) {
+				id = scope.update.edited_message.chat.id;
+			} else if (scope.update['callback_query']) {
+				id = scope.update.callback_query.message.chat.id;
+			}
+		}
+		return telegraf.telegram.sendVenue(id, lat, lon, title, address);
 	}
 
 	replyWithImage(scope, imageUrl) {
@@ -71,7 +79,6 @@ class BotOutput {
 	}
 
 	replyWithYesNoMenu(scope, user, yes, no) {
-		//scope.replyWithChatAction('typing');
 		var yesNoMenu = Telegraf.Extra
 			.markdown()
 			.markup((m) => m.inlineKeyboard([
@@ -80,6 +87,16 @@ class BotOutput {
 		return scope.reply('Please, let me know when you are ready to go on! 👇', yesNoMenu);
 	}
 
+/*
+	replyWithYesNoMenu(scope, user, yes, no) {
+		var yesNoMenu = Telegraf.Extra
+			.markdown()
+			.markup((m) => m.inlineKeyboard([
+				[m.callbackButton(yes, 'yes'), m.callbackButton(no, 'no')]
+			]).resize());
+		return scope.reply('Please, let me know when you are ready to go on! 👇', yesNoMenu);
+	}
+*/
 	replyWithStolpersteinYesNoMenu(scope, person) {
 		var yesNoMenu = Telegraf.Extra
 			.markdown()
@@ -146,13 +163,12 @@ class BotOutput {
 	}
 
 	replyWithWelcomeMessage(scope) {
-		//scope.replyWithChatAction('typing');
 		const aboutMenu = Telegraf.Extra
 			.markdown()
 			.markup((m) => m.keyboard([
-				[m.callbackButton('Take a tour! 🚶', 'tour'), m.callbackButton('Help! 🤔', 'help')]
+				[m.callbackButton('Take a tour! 🚶'), m.callbackButton('Around me! 🗺️'), m.callbackButton('Help! 🤔')]
 			]).resize());
-		return scope.reply('Welcome text!', aboutMenu);
+		return scope.reply('Hi ' + scope.update.message.from.first_name +'! Nice to see you around!\nLet me introduce myself...', aboutMenu);
 	}
 
 	replyWithNotification(scope, reply) {

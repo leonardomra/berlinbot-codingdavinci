@@ -17,7 +17,6 @@ class StoryAct extends KnowledgeChunk {
 		self.pOIsAreLoaded = false; // strange formatting should be kept, computer is stupid
 		self.actorSpeechs = []; // grammar mistake should be kept, computer is stupid
 		self.actorSpeechsAreLoaded = false; // grammar mistake should be kept, computer is stupid
-
 	}
 
 	loadActWithObject(object) {
@@ -43,16 +42,6 @@ class StoryAct extends KnowledgeChunk {
 			self.encodedTime = new Date().setHours(time[0],time[1],0);
 		}
 	}
-
-	/*
-	encodeTime() {
-		let self = this;
-		if (self.time !== undefined) {
-			var time = self.time.split(':');
-			self.encodedTime = new Date().setHours(time[0],time[1],0);
-		}
-	}
-	*/
 }
 
 module.exports = StoryAct;

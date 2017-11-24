@@ -11,25 +11,23 @@ class StoryManager {
 		self.user = user;
 		self.library = library;
 		self.brain = brain;
-		self.delay = 3000;
+		self.delay = 2000;
 		self.availableActions = {
 			sendActLocationToUser: function(self, scope, fact) {
-				let _delay = 2000;
-				//self.brain.out.replyWithSimpleMessage(scope, 'The place I wanna show you is located at ' + fact.pOIs[0].content.trim() + '! 📍');
 				let gps = fact.pOIs[0].gps.split(',');
 				let lat = gps[0];
 				let lon = gps[1];
 				scope.replyWithChatAction('typing');
 				setTimeout(() => {
 					self.currentActForMenuCallback = fact;
-					self.brain.out.sendLocation(scope, lat, lon, fact.pOIs[0].content.trim(), fact.pOIs[0].label.trim())
+					self.brain.out.sendLocation(scope, self.brain.telegraf, lat, lon, fact.pOIs[0].content.trim(), fact.pOIs[0].label.trim())
 						.then(() => {
 							scope.replyWithChatAction('typing');
 							setTimeout(() => {
 								self.brain.out.replyWithYesNoMenu(scope, user, 'Continue', 'No, cancel the tour.');
-							}, _delay);
+							}, self.delay);
 						});
-				}, _delay);
+				}, self.delay);
 			},
 			detectIfUserIsReadyToNextAct: function(self, scope, fact) {
 				self.currentActForMenuCallback = fact;
@@ -175,7 +173,6 @@ class StoryManager {
 
 	startSpeech(self, scope, currentStoryAct) {
 		let speeches, currentSpeech, mediumCursor;
-		var delayMultiplier = 0;
 		function nextSpeech() {
 			if (self.storyOrder[self.storyVerticalOrderCursor].cursor < speeches.length) {
 				scope.replyWithChatAction('typing');

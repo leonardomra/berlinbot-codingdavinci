@@ -12,7 +12,6 @@ class Action extends KnowledgeChunk {
 		let self = this;
 		self.factIsLoaded = false;
 	}
-
 }
 
 module.exports = Action;

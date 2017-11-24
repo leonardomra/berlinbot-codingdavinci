@@ -7,18 +7,25 @@ const Bug = require('./mydebugger');
 
 module.exports = class POIDistance {
 
-	init(listOfPOIs) {
-		this._listOfPOIs = listOfPOIs;
+	init(listOfPOIs, distance) {
+		let self = this;
+		self._listOfPOIs = listOfPOIs;
+		self.distance = distance;
 	}
 
 	calculateDistance(liveLocationCoord) {
-		let nearLocations = [];
-		for (var key in this._listOfPOIs) {
-			var result = distance(liveLocationCoord[0], liveLocationCoord[1], this._listOfPOIs[key][0], this._listOfPOIs[key][1]);
-			if (result < 0.5) {
-				nearLocations.push(key);
+		let self = this;
+		let nearLocationsLarge = [];
+		let nearLocationsSmall = [];
+		for (var key in self._listOfPOIs) {
+			var result = distance(liveLocationCoord[0], liveLocationCoord[1], self._listOfPOIs[key][0], self._listOfPOIs[key][1]);
+			if (result < self.distance) {
+				nearLocationsLarge.push([key,  self._listOfPOIs[key]]);
+			}
+			if (result < 0.03) {
+				nearLocationsSmall.push([key,  self._listOfPOIs[key]]);
 			}
 		}
-		return nearLocations;
+		return {distant: nearLocationsLarge, near: nearLocationsSmall};
 	}
 };

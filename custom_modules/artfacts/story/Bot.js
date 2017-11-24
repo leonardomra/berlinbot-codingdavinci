@@ -7,11 +7,13 @@ const Brain = require('./../../brain');
 const StoryLoader = require('./StoryLoader');
 const StoryManager = require('./StoryManager');
 
+
 class Bot {
 
 	wakeup(projectsToLoad) {
 		bug.artmsg('Hit from Bot!');
 		let self = this;
+		self.messages = {};
 		self.brain = new Brain();
 		self.brain.telegraf = self.telegraf;
 		self.brain.hook = self.hook;
@@ -19,8 +21,13 @@ class Bot {
 		self.qts = ['time', 'image', 'extra', 'video', 'audio', 'gps', 'url'];
 		self.storyPerUser = {};
 		self.loadedProjects = {};
-		projectsToLoad.forEach((project) => self.loadedProjects[project] = null);
-		self.loadNextProject(null);
+		self.users = {};
+		if (projectsToLoad.length !== 0) {
+			projectsToLoad.forEach((project) => self.loadedProjects[project] = null);
+			self.loadNextProject(null);
+		} else {
+			self.initializeBotBrain(null);
+		}
 	}
 
 	loadNextProject(scope) {

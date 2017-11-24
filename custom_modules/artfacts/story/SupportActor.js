@@ -2,10 +2,8 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var r = require('./');
-
-class Model {
+class SupportActor {
 
 }
 
-module.exports = Model;
+module.exports = SupportActor;

@@ -7,7 +7,7 @@ const Node = require('./../node');
 const StoryAct = require('./StoryAct');
 const StoryFact = require('./StoryFact');
 const MainActor = require('./Actor');
-const BotUser = require('./BotUser');
+//const BotUser = require('./BotUser');
 const MainNarrative = require('./MainNarrative');
 const ActorSpeech = require('./ActorSpeech');
 const POI = require('./POI');
@@ -31,7 +31,7 @@ class StoryLoader {
 		self.library = {
 			'StoryFact': {class: StoryFact, objs: [], promiseCounter: [], finishedCounter: []},
 			'StoryAct': {class: StoryAct, objs: [], promiseCounter: [], finishedCounter: []},
-			'BotUser': {class: BotUser, objs: [], promiseCounter: [], finishedCounter: []},
+			//'BotUser': {class: BotUser, objs: [], promiseCounter: [], finishedCounter: []},
 			'MainActor': {class: MainActor, objs: [], promiseCounter: [], finishedCounter: []},
 			'MainNarrative': {class: MainNarrative, objs: [], promiseCounter: [], finishedCounter: []},
 			'ActorSpeech': {class: ActorSpeech, objs: [], promiseCounter: [], finishedCounter: []},
