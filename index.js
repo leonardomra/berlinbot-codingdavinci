@@ -7,13 +7,14 @@ const App = require('./custom_modules/app');
 const Telegraf = require('telegraf');
 const API_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const PORT = process.env.PORT || 3000;
-const URL = 'https://cc40963f.ngrok.io'; //process.env.URL || 'https://your-heroku-app.herokuapp.com';
+const URL = process.env.URL;
 const telegraf = new Telegraf(API_TOKEN);
 const app = new App();
 
 const projectsToLoad = [
-	//'59faeeb23dcf640fb556b5e5',
-	//'5a154a7909a3ae5bcadea2ba'
+	'59faeeb23dcf640fb556b5e5',
+	'5a154a7909a3ae5bcadea2ba',
+	'5a17edfb09a3ae5bcadea2bb',
 ];
 
 telegraf.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
