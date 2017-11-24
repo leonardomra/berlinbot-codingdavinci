@@ -17,8 +17,8 @@ const projectsToLoad = [
 	'5a17edfb09a3ae5bcadea2bb',
 ];
 
-//telegraf.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
-telegraf.telegram.setWebhook(`${URL}/webhook`);
+console.log(`${URL}/bot${API_TOKEN}`);
+telegraf.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
 telegraf
 	.catch((err) => {
 		bug.error('Ooops', err);

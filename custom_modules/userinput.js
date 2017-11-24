@@ -3,7 +3,7 @@
 /* jshint node: true */
 
 const apiai = require('apiai');
-const app = apiai(process.env.DIALOGFLOW_TOKEN);
+const appai = apiai(process.env.DIALOGFLOW_TOKEN);
 const Bug = require('./mydebugger');
 
 class UserInput {
@@ -51,7 +51,7 @@ class UserInput {
 
 	processTextMessage(_message, callback) {
 		let self = this;
-		var request = app.textRequest(_message, {
+		var request = appai.textRequest(_message, {
 			sessionId: '<unique session id>'
 		}).on('response', function(response) {
 			let reply = {
