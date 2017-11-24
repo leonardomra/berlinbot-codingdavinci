@@ -7,7 +7,7 @@ const App = require('./custom_modules/app');
 const Telegraf = require('telegraf');
 const API_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const PORT = process.env.PORT || 3000;
-const URL = 'https://cc40963f.ngrok.io'; //process.env.URL;
+const URL = process.env.URL;
 const telegraf = new Telegraf(API_TOKEN);
 const app = new App();
 
