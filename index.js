@@ -13,8 +13,9 @@ const app = new App();
 
 const projectsToLoad = [
 	'59faeeb23dcf640fb556b5e5',
-	'5a154a7909a3ae5bcadea2ba',
+	//'5a154a7909a3ae5bcadea2ba',
 	'5a17edfb09a3ae5bcadea2bb',
+	'5a19883d09a3ae5bcadea2bd'
 ];
 
 console.log(`${URL}/bot${API_TOKEN}`);

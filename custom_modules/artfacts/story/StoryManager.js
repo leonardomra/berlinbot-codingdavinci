@@ -94,7 +94,7 @@ class StoryManager {
 		bug.artmsg('Story will be stopped...');
 		let self = this;
 		self.brain.isStoryActive = false;
-		self.brain.out.replyWithSimpleMessage(scope, 'Story was stopped.');
+		//self.brain.out.replyWithSimpleMessage(scope, 'Story was stopped.');
 	}
 
 	resetStoryOrder(self) {
