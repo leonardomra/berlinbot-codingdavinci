@@ -153,7 +153,7 @@ class Node {
 		if (id === undefined) {
 			return responseCallback('ERROR: no person id defined :(');
 		}
-		let queryString = 'match (person:PERSON)-[r]-(aggregate) ' +
+		let queryString = 'match (person:PERSON)-[r]->(aggregate) ' +
 		'where id(person)=' + id + ' ' +
 		'return {aggregate: aggregate, rel: type(r)} as aggregate';
 		this.neo.match(queryString, function(response) {
