@@ -14,27 +14,27 @@ class Location extends Node {
 		let self = this;
 		self.pos = undefined;
 		self.extra = undefined;
-		self.gps= undefined;
-		self.instantiation= undefined;
+		self.gps = undefined;
+		self.instance = undefined;
 		self.kb = undefined;
 		this.isLocationLoaded = false;
 		self.getLocation(id, function(response) {
 			this.pos = response.pos;
 			this.extra = response.extra;
 			this.gps = response.gps;
-			this.instantiation = response.instantiation;
+			this.instance = response.instance;
 			this.kb = response.kb;
 			this.isLocationLoaded = true;
 			callback(this);
 		}.bind(self));
 	}
 
-	loadLocationWithReadyInfo(pos, extra, gps, instantiation, kb){
+	loadLocationWithReadyInfo(pos, extra, gps, instance, kb){
 		let self = this;
 		self.pos = pos;
 		self.extra = extra;
 		self.gps = gps;
-		self.instantiation = instantiation;
+		self.instance = instance;
 		self.kb = kb;
 		this.isLocationLoaded = true;
 	}

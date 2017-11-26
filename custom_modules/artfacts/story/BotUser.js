@@ -14,6 +14,18 @@ class BotUser {
 		self.id = id;
 		self.userLocation = new UserLocation();
 		self.userLocation.init(self);
+		self.personNumber = undefined;
+		self.peopleOptions = [];
+	}
+
+	setPersonOption(number) {
+		let self = this;
+		self.personNumber = number;
+	}
+
+	setPeopleOptions(list) {
+		let self = this;
+		self.peopleOptions = list;
 	}
 }
 

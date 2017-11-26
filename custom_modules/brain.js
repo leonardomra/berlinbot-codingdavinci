@@ -7,6 +7,7 @@
 * @module custom_modules/part
 */
 
+const Node = require('./artfacts/node');
 const bug = require('./mydebugger');
 const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
@@ -35,6 +36,13 @@ class Brain {
 		self.locationReplyCounter = 0;
 		self.locationEmitter = new EventEmitter();
 		self.startTelegrafRouters();
+		//self.createListOfNames();
+	}
+
+	createListOfNames() {
+		Node.getAllPersonsNames(function(response) {
+			console.log(response);
+		});
 	}
 
 	/**
@@ -42,6 +50,7 @@ class Brain {
 	*/
 	startTelegrafRouters() {
 		let self = this;
+		var node = new Node();
 		self.telegraf.start((scope) => {
 			self.bot.users[scope.update.message.from.id] = new BotUser();
 			self.bot.users[scope.update.message.from.id].init(scope.update.message.from.id, scope.update.message.from.first_name);
@@ -159,31 +168,41 @@ class Brain {
 				self.locationReplyCounter++;
 				bug.artmsg('isLiveLocationActive will be reset... ' + self.locationReplyCounter);
 				self.isLiveLocationActive = false;
-				//self.timeOutLocationActive = undefined;
 			}, 1000);
 		}
 	}
 
-	/**
-	* Manage Intents proviced by Dialogflow API
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
 	manageIntent(reply, scope) {
 		let self = this;
-		bug.msg(reply.intention);
+		bug.msg('You want me to process ' + reply.intention);
+		let user;
+		let message;
+		if (scope['message']) {
+			message = scope.message;
+		} else if (scope['update']) {
+			message = scope.update.edited_message;
+		}
+		if (!self.bot.users[message.from.id]) {
+			self.bot.users[message.from.id] = new BotUser();
+			user = self.bot.users[message.from.id];
+			user.init(message.from.id, message.from.first_name);
+			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' did not exist.');
+		} else {
+			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' already exists.');
+			user = self.bot.users[message.from.id];
+		}
 		switch (reply.intention) {
 			case 'Identify Help':
 				self.identifyHelpIntent(reply, scope);
 				break;
 			case 'Identify Person':
-				self.identifyPersonIntent(reply, scope);
+				self.identifyPersonIntent(reply, scope, user, message);
 				break;
 			case 'Identify Option':
-				self.identifyOptionIntent(reply, scope);
+				self.identifyOptionIntent(reply, scope, user, message);
 				break;
 			case 'Identify Location':
-				self.identifyLocationIntent(reply, scope);
+				self.identifyLocationIntent(reply, scope, user, message);
 				break;
 			case 'Identify Tour':
 				self.identifyTourIntent(reply, scope);
@@ -197,44 +216,22 @@ class Brain {
 		}
 	}
 
-	/**
-	* Handle Undefined Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
 	undefinedIntent(reply, scope) {
 		let self = this;
 		self.out.replyWithSimpleMessage(scope, reply.bot);
 		//scope.sendMessage(reply.bot);
 	}
 
-	/**
-	* Handle Default Fallback Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
 	defaultFallbackIntent(reply, scope) {
 		let self = this;
-		//Node.getAllPersonsNames(function(response) {});
 		self.out.replyWithSimpleMessage(scope, reply.bot);
-		//scope.sendMessage(reply.bot);
 	}
 
-	/**
-	* Handle Identify Help Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
 	identifyHelpIntent(reply, scope) {
 		let self = this;
 		self.out.replyWithSimpleMessage(scope, reply.bot);
 	}
 
-	/**
-	* Handle Identify Tour Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
 	identifyTourIntent(reply, scope) {
 		let self = this;
 		let actors = [];
@@ -245,13 +242,9 @@ class Brain {
 		self.out.replyWithMenuTourMessage(scope, actors);
 	}
 
-	/**
-	* Handle Identify Location Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
-	identifyLocationIntent(reply, scope) {
+	identifyLocationIntent(reply, scope, user, message) {
 		let self = this;
+		/*
 		let user;
 		let message;
 		if (scope['message']) {
@@ -266,6 +259,7 @@ class Brain {
 		} else {
 			user = self.bot.users[message.from.id];
 		}
+		*/
 		user.userLocation.location = reply.loc;
 		let told = user.userLocation.getToldLocations();
 		let locations = user.userLocation.getPOIs();
@@ -303,19 +297,15 @@ class Brain {
 		}
 	}
 
-	/**
-	* Handle Identify Option Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
-	identifyOptionIntent(reply, scope) {
+	identifyOptionIntent(reply, scope, user, message) {
 		let self = this;
 		if (!Array.isArray(reply.entities)) {
 			if (reply.contexts.length !== 0) {
 				reply.contexts.forEach( function(context) {
 					if (context.name === 'person-context') {
-						var p = self.options[context.parameters.Option.Option];
-						if (Object.keys(self.options).length === 0) {
+						//var p = self.options[context.parameters.Option.Option];
+						var p = user.peopleOptions[context.parameters.Option.Option];
+						if (Object.keys(user.peopleOptions).length === 0) {
 							self.out.replyWithSimpleMessage(scope, 'Sorry, could you please ask you question again?');
 						} else {
 							try {
@@ -337,12 +327,7 @@ class Brain {
 		}
 	}
 
-	/**
-	* Handle Indentify Person Intent
-	* @param {object} reply - reply from Dialogflow API.
-	* @param {object} scope - scope from Telegram API.
-	*/
-	identifyPersonIntent(reply, scope) {
+	identifyPersonIntent(reply, scope, user, message) {
 		let self = this;
 		if (!Array.isArray(reply.entities)) {
 			// is dict
@@ -371,7 +356,13 @@ class Brain {
 					}, 500);
 				} else {
 					bug.msg('Several people found!');
-					self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
+					user.peopleOptions = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
+					//console
+					//console.log(self.bot.users[scope.update.message.from.id])
+					//self.
+					//self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
+
+					
 				}
 			});
 		}

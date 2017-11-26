@@ -139,7 +139,7 @@ class Node {
 		}
 		let queryString = 'match (person:PERSON) ' +
 		'where id(person)=' + id + ' ' +
-		'return person';
+		'return person ORDER BY upper(person.name) ASC';
 		this.neo.match(queryString, function(response) {
 			let _response = {};
 			if (response !== null) {
@@ -195,24 +195,24 @@ class Node {
 	static getAllPersonsNames(responseCallback) {
 		let queryString = 'match (person:PERSON) return person.vorname as name union all match (person:PERSON) with person.nachname as name return distinct name';
 		let neo = new NeoConnect();
+		neo.init();
 		neo.match(queryString, function(response) {
 			let _response = [];
 			response.forEach(function(person) {
 				_response.push(person.name);
 			});
-			//_response = uniq(_response);
-			//let stream = fs.createWriteStream('./data/names.txt');
-			//stream.once('open', function(fd) {
-			//	_response.forEach( function(line, index) {
-			//		let _line = line.replace(/ *\([^)]*\) */g, '');
-			//		_line = _line.replace(/„/g, '');
-			//		_line = _line.replace(/“/g, '');
-			//		stream.write('"' + _line + '","' + _line + '"\n');
-			//	});
-			//	stream.end();
-			//});
+			_response = uniq(_response);
+			let stream = fs.createWriteStream('./data/names.txt');
+			stream.once('open', function(fd) {
+				_response.forEach( function(line, index) {
+					let _line = line.replace(/ *\([^)]*\) */g, '');
+					_line = _line.replace(/„/g, '');
+					_line = _line.replace(/“/g, '');
+					stream.write('"' + _line + '","' + _line.toLowerCase() + '"\n');
+				});
+				stream.end();
+			});
 			return responseCallback(_response);
-
 		});
 		function uniq(a) {
 			var prims = {"boolean":{}, "number":{}, "string":{}}, objs = [];

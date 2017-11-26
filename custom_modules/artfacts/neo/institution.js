@@ -4,34 +4,34 @@
 
 var Node = require('./../node');
 
-class Event extends Node {
+class Institution extends Node {
 
 	init() {
 		super.init();
 	}
 
-	loadEventWithID(id, callback) {
+	loadInstitutionWithID(id, callback) {
 		let self = this;
-		self.date = undefined;
+		self.name = undefined;
 		self.instance = undefined;
 		self.kb = undefined;
-		self.isEventLoaded = false;
-		self.getEvent(id, function(response) {
-			this.date = response.date;
+		this.isLocationLoaded = false;
+		self.getLocation(id, function(response) {
+			this.name = response.gps;
 			this.instance = response.instance;
 			this.kb = response.kb;
-			this.isEventLoaded = true;
+			this.isLocationLoaded = true;
 			callback(this);
 		}.bind(self));
 	}
 
-	loadEventWithReadyInfo(date, instance, kb){
+	loadInstitutionWithReadyInfo(name, instance, kb){
 		let self = this;
-		self.date = date;
+		self.name = name;
 		self.instance = instance;
 		self.kb = kb;
-		self.isEventLoaded = true;
+		this.isLocationLoaded = true;
 	}
 }
 
-module.exports = Event;
+module.exports = Institution;

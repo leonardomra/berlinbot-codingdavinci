@@ -11,7 +11,7 @@ class StoryManager {
 		self.user = user;
 		self.library = library;
 		self.brain = brain;
-		self.delay = 2000;
+		self.delay = 10000;
 		self.availableActions = {
 			sendActLocationToUser: function(self, scope, fact) {
 				let gps = fact.pOIs[0].gps.split(',');

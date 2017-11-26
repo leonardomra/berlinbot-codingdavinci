@@ -19,6 +19,7 @@ class NeoConnect {
 	}
 
 	match(queryString, responseCallback) {
+		//console.log(queryString);
 		let self = this;
 		var tryCounter = 0;
 		function tryAgain() {
