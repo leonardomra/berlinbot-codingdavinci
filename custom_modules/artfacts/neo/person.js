@@ -111,7 +111,7 @@ class Person extends Node {
 						let name_inst = node.aggregate.properties.name;
 						var institution = new Institution();
 						institution.init();
-						institution.loadLocationWithReadyInfo(name_inst, instance, kb);
+						institution.loadInstitutionWithReadyInfo(name_inst, instance, kb);
 						aggregates[node.rel] = institution;
 						break;
 					case 'EVENT':
