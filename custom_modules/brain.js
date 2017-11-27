@@ -127,9 +127,6 @@ class Brain {
 			self.manageIntent({intention: 'Identify Tour', bot: 'I\'ll organize your tour. Just a second...'}, scope);
 		});
 		self.telegraf.hears('Around me! 🗺️', scope => {
-
-			console.log('REQUEST LOCATIONS')
-
 			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
 		});
 		self.telegraf.hears('Help! 🤔', scope => {
@@ -253,6 +250,11 @@ class Brain {
 		user.userLocation.location = reply.loc;
 		let told = user.userLocation.getToldLocations();
 		let locations = user.userLocation.getPOIs();
+
+		if (locations.distant.length === 0 && locations.near.length === 0) {
+			self.out.replyWithSimpleMessage(scope, 'You are not close to any location I know. Try again later!');
+			return;
+		}
 		locations.near.forEach(function(poi) {
 			let shouldInform = true;
 			for (let toldAddress in told) {

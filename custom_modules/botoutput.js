@@ -452,7 +452,6 @@ class BotOutput {
 
 	replyWithLocationOfStolperstein(reply, scope, user, message, telegraf, poi, allVictimsForAddresses) {
 		let self = this;
-		//console.log(allVictimsForAddresses);
 		console.log(poi[0]);
 		//let vic = {};
 		//vic[poi[0]] = ['Leonardo'];
