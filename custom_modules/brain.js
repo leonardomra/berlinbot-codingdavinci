@@ -26,7 +26,7 @@ class Brain {
 	init() {
 		let self = this;
 		self.bot = null;
-		self.options = {};
+		//self.options = {};
 		self.in = new UserInput();
 		self.in.brain = self;
 		self.out = new BotOutput();
@@ -174,7 +174,7 @@ class Brain {
 
 	manageIntent(reply, scope) {
 		let self = this;
-		bug.msg('You want me to process ' + reply.intention);
+		bug.msg('You want me to process ------------>>> [' + reply.intention + ']');
 		let user;
 		let message;
 		if (scope['message']) {
@@ -206,6 +206,9 @@ class Brain {
 				break;
 			case 'Identify Tour':
 				self.identifyTourIntent(reply, scope);
+				break;
+			case 'Identify Yes or No':
+				self.identifyYesNoIntent(reply, scope, user, message);
 				break;
 			case 'Default Fallback Intent':
 				self.defaultFallbackIntent(reply, scope);
@@ -303,18 +306,20 @@ class Brain {
 			if (reply.contexts.length !== 0) {
 				reply.contexts.forEach( function(context) {
 					if (context.name === 'person-context') {
-						//var p = self.options[context.parameters.Option.Option];
 						var p = user.peopleOptions[context.parameters.Option.Option];
 						if (Object.keys(user.peopleOptions).length === 0) {
 							self.out.replyWithSimpleMessage(scope, 'Sorry, could you please ask you question again?');
 						} else {
+
+							console.log('IM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HERE')
 							try {
 								if (Object.keys(p.aggregates).length !== 0) {
-									self.out.replyWithShortDescription(scope, p);
-									self.out.targetPerson = p;
-									self.out.replyWithStolpersteinYesNoMenu(scope, p);
+									user.peopleOptions = [];
+									user.peopleOptions.push(p);
+									self.out.shortDescriptionIntro(scope, p, user, message);
 								} else {
-									self.out.replyWithSimpleVictimStatement(scope, p);
+									console.log('should replyWithSimpleVictimStatement');
+									//self.out.replyWithSimpleVictimStatement(scope, p);
 								}
 							} catch(e) {
 								bug.error(e);
@@ -345,26 +350,46 @@ class Brain {
 			people.loadPersonsWithMatchingString(string, function(o) {
 				if (o.length === 0) {
 					bug.msg('No person found :(');
-					self.options = {};
+					user.peopleOptions = [];
 					self.out.replyWithSimpleMessage(scope, 'Sorry! No ' + string + ' found.');
 				} else if (o.length == 1) {
-					bug.msg('1 person found :(');
-					self.options[0] = o[0];
+					bug.msg('1 person found :)');
+					user.peopleOptions = [];
+					user.peopleOptions.push(o[0]);
 					setTimeout(function() { // dirty fix - wait for people to load completely
-						self.out.replyWithShortDescription(scope, o[0]);
-						self.out.replyWithStolpersteinYesNoMenu(scope, o[0]);
-					}, 500);
+						self.out.shortDescriptionIntro(scope, o[0], user, message);
+					}, 1000);
 				} else {
-					bug.msg('Several people found!');
+					bug.msg('Several people found! :o');
 					user.peopleOptions = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
-					//console
-					//console.log(self.bot.users[scope.update.message.from.id])
-					//self.
-					//self.options = self.out.replyWithMultiplePeopleOptionList(scope, string, o);
-
-					
 				}
 			});
+		}
+	}
+
+	identifyYesNoIntent(reply, scope, user, message) {
+		let self = this;
+		let context = reply.contexts[0].name;
+		if (context === 'person-context' && user.isAllowedToReceiveSchoolCard === true && reply.entities.PositiveNegative === 'yes') {
+			user.isAllowedToReceiveSchoolCard = false;
+			self.out.shortDescriptionShowSchoolCards(scope, user.peopleOptions[0], user, message);
+		} else if (context === 'person-context' && user.isAllowedToReceiveInfoAboutFamily === true && reply.entities.PositiveNegative === 'yes') {
+			user.isAllowedToReceiveInfoAboutFamily = false;
+			self.out.shortDescriptionDivertToOtherPerson(scope, user.peopleOptions[0], user, message);
+		} else if (context === 'person-context' && user.isAllowedToReceiveHomeAddress === true && reply.entities.PositiveNegative === 'yes') {
+			user.isAllowedToReceiveHomeAddress = false;
+			self.out.shortDescriptionLocationHome(scope, user.peopleOptions[0], user, message);
+		}
+
+		if (context === 'person-context' && user.isAllowedToReceiveSchoolCard === true && reply.entities.PositiveNegative === 'no') {
+			user.isAllowedToReceiveSchoolCard = false;
+			self.out.shortDescriptionParentsChild(scope, user.peopleOptions[0], user, message);
+		} else if (context === 'person-context' && user.isAllowedToReceiveInfoAboutFamily === true && reply.entities.PositiveNegative === 'no') {
+			user.isAllowedToReceiveInfoAboutFamily = false;
+			self.out.shortDescriptionSchool(scope, user.peopleOptions[0], user, message);
+		} else if (context === 'person-context' && user.isAllowedToReceiveHomeAddress === true && reply.entities.PositiveNegative === 'no') {
+			user.isAllowedToReceiveHomeAddress = false;
+			self.out.shortDescriptionEndMessage(scope, user.peopleOptions[0], user, message);
 		}
 	}
 }

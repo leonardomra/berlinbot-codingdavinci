@@ -101,64 +101,314 @@ class BotOutput {
 		return scope.reply('There is a "Stolperstein" with his/her name. Would you like to visit it?', yesNoMenu);
 	}
 
-	replyWithShortDescription(scope, person) {
-		if (person.itsid !== 'unknown') {
-			console.log('http://insidetouristguides.com/botfiles/' + person.itsid + '_1.jpg');
-			scope.replyWithPhoto('http://insidetouristguides.com/botfiles/' + person.itsid + '_1.jpg').catch(() => bug.error('Picture not found.'));
-		}
-		console.log('was_born_in:');
-		console.log(person.aggregates['was_born_in']);
-		console.log('is_father_of:');
-		console.log(person.aggregates['is_father_of']);
-		console.log('is_mother_of:');
-		console.log(person.aggregates['is_mother_of']);
-		console.log('is_child_of:');
-		console.log(person.aggregates['is_child_of']);
-		console.log('studied_at:');
-		console.log(person.aggregates['studied_at']);
-		console.log('started_enrollment:');
-		console.log(person.aggregates['started_enrollment']);
-		console.log('ended_enrollment:');
-		console.log(person.aggregates['ended_enrollment']);
-		console.log('was_deported_in:');
-		console.log(person.aggregates['was_deported_in']);
-		console.log('lived_at:');
-		console.log(person.aggregates['lived_at']);
-		console.log('died_in:');
-		console.log(person.aggregates['died_in']);
-		console.log('died_at:');
-		console.log(person.aggregates['died_at']);
-		
 
-		let reply = person.name + ' was a ' + person.instance.toLowerCase() + ' of the Nazi regime. ';
-		if (person.aggregates.was_born_in !== undefined) {
-			let msec = Date.parse(person.aggregates.was_born_in.date);
-			let d = new Date(msec);
-			reply += person.name + ' was born in ' + d.getFullYear();
+	shortDescriptionIntro(scope, person, user, message) {
+		let self = this;
+		self.showAvailability(scope, person);
+		let isKid = false;
+		let hasBornDate = false;
+		if (person.itsid !== 'unknown') isKid = true;
+		if (person.aggregates['was_born_in']) hasBornDate = true;
+		if (hasBornDate) {
+			if(person.aggregates.was_born_in.date === 'unknown') hasBornDate = false;
 		}
-		if (person.aggregates.lived_at !== undefined) {
-			reply += ' and lived for some part of his/her life at the ' + person.aggregates.lived_at.pos + ' in ' + person.aggregates.lived_at.extra  + '. ';
-		}
-		if (person.aggregates.died_at !== undefined) {
-			// shouldn't be died, but was deported, because some of them survived the concentration camps
-			reply += person.name + ' was deported to ' + person.aggregates.died_at.pos + '. ';
-		}
-		if (person.aggregates.died_in !== undefined) {
-			if (person.aggregates.died_in.date === 'unknown') {
-				reply += 'I\'am not sure when she died.';
-			} else {
-				let msec = Date.parse(person.aggregates.died_in.date);
+		let reply = '';
+		if (isKid) {
+			let pronom = (function(g) {
+				if (g === 'female')
+					return  'she';
+				else
+					return 'he';
+			})(person.gender);
+			reply += person.name + ' was one of the school children victims of the Nazi regime';
+			if (hasBornDate) {
+				let msec = Date.parse(person.aggregates.was_born_in.date);
 				let d = new Date(msec);
-				if (d.getFullYear() > 1945) { // liberation of Auschwitz
-					reply += person.name + ' survided life in the concentration camp, and died later on in ' + d.getFullYear() + '.';
+				reply += ', who was born in ' + d.getFullYear() + '.';
+			} else {
+				reply += '.'; 
+			}
+			reply += ' Would you like to see the registration cards of when ' + pronom + ' was studying?';
+			user.isAllowedToReceiveSchoolCard = true;
+		} else {
+			reply += person.name + ' was a ' + person.instance.toLowerCase() + ' of the Nazi regime';
+			if (hasBornDate) {
+				let msec = Date.parse(person.aggregates.was_born_in.date);
+				let d = new Date(msec);
+				reply += ' born in ' + d.getFullYear() + '.';
+			} else {
+				reply += '.'; 
+			}
+			user.isAllowedToReceiveSchoolCard = false;
+		}
+		scope.reply(reply)
+			.then(() => {
+				if (!user.isAllowedToReceiveSchoolCard) self.shortDescriptionParentsChild(scope, person, user, message);
+			});
+	}
+
+	shortDescriptionShowSchoolCards(scope, person, user, message) {
+		console.log('shortDescriptionShowSchoolCards');
+		let self = this;
+		user.isAllowedToReceiveSchoolCard = false;
+		scope.reply('There you are!');
+		let photoUrl_1 = 'http://insidetouristguides.com/botfiles/cards/' + person.itsid + '_1.jpg';
+		let photoUrl_2 = 'http://insidetouristguides.com/botfiles/cards/' + person.itsid + '_2.jpg';
+		scope.replyWithPhoto(photoUrl_1)
+		.then(() => {
+			scope.replyWithPhoto(photoUrl_2)
+			.then(() => {
+				console.log('do something else...');
+				self.shortDescriptionParentsChild(scope, person, user, message);
+			})
+			.catch((e) => {
+				bug.error('Picture not found.');
+			});
+		})
+		.catch((e) => {
+			bug.error('Picture not found.');
+		});
+	}
+
+	shortDescriptionParentsChild(scope, person, user, message) {
+		console.log('shortDescriptionParentsChild');
+		let self = this;
+		let isFather = false;
+		let isMother = false;
+		let isChild = false;
+		if (person.aggregates['is_father_of']) isFather = true;
+		if (person.aggregates['is_mother_of']) isMother = true;
+		if (person.aggregates['is_child_of']) isChild = true;
+		let reply = '';
+		if (isFather === false && isMother === false && isChild === false) {
+			self.shortDescriptionSchool(scope, person, user, message);
+		} else {
+			user.isAllowedToReceiveInfoAboutFamily = true;
+			if (isFather === true && isMother === false) {
+				reply += person.name + ' was the father of ' + person.aggregates.is_father_of.name + '. Would you like to get more information about ' + person.aggregates.is_father_of.name + '?';
+				user.rememberPersonToDivert = person.aggregates.is_father_of.name;
+			} else if (isFather === false && isMother === true) {
+				reply += person.name + ' was the mother of ' + person.aggregates.is_mother_of.name + '. Would you like to get more information about ' + person.aggregates.is_mother_of.name + '?';
+				user.rememberPersonToDivert = person.aggregates.is_mother_of.name;
+			} else if (isFather === false && isMother === false){
+				reply += person.name + ' was the child of ' + person.aggregates.is_child_of.name + '. Would you like to get more information about ' + person.aggregates.is_child_of.name + '?';
+				user.rememberPersonToDivert = person.aggregates.is_child_of.name;
+			}
+			scope.reply(reply);
+		}
+	}
+
+
+	shortDescriptionDivertToOtherPerson(scope, person, user, message) {
+		console.log('shortDescriptionDivertToOtherPerson');
+		let self = this;
+		if (user.rememberPersonToDivert) {
+			message.text = user.rememberPersonToDivert;
+			self.brain.in.init(scope, message, 'text');
+			self.brain.in.analyseMessage(function(reply) {
+				self.brain.manageIntent(reply, scope);
+			});
+		} else {
+			console.log('nothing 1');
+		}
+	}
+
+	shortDescriptionSchool(scope, person, user, message) {
+		console.log('shortDescriptionSchool');
+		let self = this;
+		let isKid = false;
+		let isStudent = false;
+		let wasEnrolled = false;
+		let hasQuit = false;
+		if (person.itsid !== 'unknown') isKid = true;
+		if (person.aggregates['studied_at']) isStudent = true;
+		if (person.aggregates['started_enrollment']) wasEnrolled = true;
+		if (person.aggregates['ended_enrollment']) hasQuit = true;
+		let reply = '';
+		if (isKid) {
+			let pronom = (function(g) {
+				if (g === 'female')
+					return  'She';
+				else
+					return 'He';
+			})(person.gender);
+			if (isStudent) {
+				reply += person.name + ' was a student at the ' + person.aggregates.studied_at.name + '. ';
+				if (wasEnrolled) {
+					let dateS = person.aggregates.started_enrollment.date;
+					if (dateS.substring(4, dateS.length) === '-00-00') dateS = dateS.substring(0, 4);
+					let msecS = Date.parse(dateS);
+					let dS = new Date(msecS);
+					reply += pronom + ' started stuying at this school in ' + dS.getFullYear();
+					if (hasQuit) {
+						let dateE = person.aggregates.ended_enrollment.date;
+						if (dateE.substring(4, dateE.length) === '-00-00') dateE = dateE.substring(0, 4);
+						let msecE = Date.parse(dateE);
+						let dE = new Date(msecE);
+						reply += ' and ended in ' + dE.getFullYear() + '.';
+						if (person.reasonLeavingSchool !== 'unknown') {
+							reply += ' The reason why ' + pronom.toLowerCase() + ' had to leave school is unknown.';
+						} else {
+							reply += pronom + ' left school, because ' + pronom.toLowerCase() + ' ' + person.reasonLeavingSchool.toLowerCase();
+						}
+					}
+				}
+			} else {
+				console.log('nothing 2');
+			}
+			scope.reply(reply)
+				.then(() => {
+					self.shortDescriptionHome(scope, person, user, message);
+				});
+		} else {
+			self.shortDescriptionHome(scope, person, user, message);
+		}
+	}
+
+	shortDescriptionHome(scope, person, user, message) {
+		let self = this;
+		let hadHome = false;
+		let wasDeported = false;
+		let hasDied = false;
+		let hasDeathPlace = false;
+		let reply = '';
+		if (person.aggregates['lived_at']) hadHome = true;
+		if (person.aggregates['was_deported_in']) wasDeported = true;
+		if (person.aggregates['died_in']) hasDied = true;
+		if (person.aggregates['died_at']) hasDeathPlace = true;
+		if (hadHome) {
+			user.isAllowedToReceiveHomeAddress = true;
+			reply += person.name + ' lived at ' + person.aggregates.lived_at.pos + '. ';
+			if (wasDeported) {
+				let dateD = person.aggregates.was_deported_in.date;
+				if (dateD.substring(4, dateD.length) === '-00-00') dateD = dateD.substring(0, 4);
+				let msecD = Date.parse(dateD);
+				let dD = new Date(msecD);
+				reply += person.nachname + ' was deported in ' + dD.getFullYear();
+				if (hasDied) {
+					let dateDi = person.aggregates.died_in.date;
+					if (dateDi !== 'unknown') {
+						if (dateDi.substring(4, dateD.length) === '-00-00') dateDi = dateDi.substring(0, 4);
+						let msecDi = Date.parse(dateDi);
+						let dDi = new Date(msecDi);
+						reply += ' and died in ' + dDi.getFullYear();
+					} else {
+						if (hasDeathPlace) {
+							reply += ' and died';
+						}
+					}
+					if (hasDeathPlace) {
+						reply += ' in ' + person.aggregates.died_at.pos + '.';
+					} else {
+						reply += '.';
+					}
 				} else {
-					reply += person.name + ' died in ' + d.getFullYear() + '.';
+					reply += '.';
 				}
 			}
-		} else {
-			reply += '.';
+			reply += ' Would you like to visit the place where ' + person.name + ' lived?';
 		}
 		scope.reply(reply);
+	}
+
+	shortDescriptionLocationHome(scope, person, user, message) {
+		console.log('shortDescriptionLocationHome');
+		let self = this;
+		let hadHome = false;
+		if (person.aggregates['lived_at']) hadHome = true;
+		console.log(hadHome)
+		console.log(person.aggregates['lived_at'])
+		if (hadHome) {
+			console.log(person.aggregates.lived_at)
+			let coords = person.aggregates.lived_at.gps.split(',');
+			scope.replyWithLocation(coords[0], coords[1])
+				.then(() => {
+					self.shortDescriptionEndMessage(scope, person, user, message);
+				});
+		}
+	}
+
+	shortDescriptionEndMessage(scope, person, user, message) {
+		let self = this;
+		scope.reply('If you would like to know about someone else. Just let me know. Glad to help! 🤗');
+	}
+
+	showAvailability(scope, person) {
+		let isKid = false;
+		let hasBornDate = false;
+		let isFather = false;
+		let isMother = false;
+		let isChild = false;
+		let isStudent = false;
+		let wasEnrolled = false;
+		let hasQuit = false;
+		let wasDeported = false;
+		let hadHome = false;
+		let hasDied = false;
+		let hasDeathPlace = false;
+		if (person.itsid !== 'unknown') {
+			isKid = true;
+		}
+		console.log('was_born_in:');
+		if (person.aggregates['was_born_in']) {
+			hasBornDate = true;
+			console.log(person.aggregates.was_born_in.date);
+		}
+		console.log('is_father_of:');
+		if (person.aggregates['is_father_of']) {
+			isFather = true;
+			console.log(person.aggregates.is_father_of.name);
+		}
+		console.log('is_mother_of:');
+		if (person.aggregates['is_mother_of']) {
+			isMother = true;
+			console.log(person.aggregates.is_mother_of.name);
+		}
+		console.log('is_child_of:');
+		if (person.aggregates['is_child_of']) {
+			isChild = true;
+			console.log(person.aggregates.is_child_of.name);
+		}
+		console.log('studied_at:');
+		if (person.aggregates['studied_at']) {
+			isStudent = true;
+			console.log(person.aggregates.studied_at.name);
+			// find out who else studies here
+		}
+		console.log('started_enrollment:');
+		if (person.aggregates['started_enrollment']) {
+			wasEnrolled = true;
+			console.log(person.aggregates.started_enrollment.date);
+		}
+		console.log('ended_enrollment:');
+		if (person.aggregates['ended_enrollment']) {
+			hasQuit = true;
+			console.log(person.aggregates.ended_enrollment.date);
+		}
+		console.log('was_deported_in:');
+		if (person.aggregates['was_deported_in']){
+			wasDeported = true;
+			console.log(person.aggregates.was_deported_in.date);
+		}
+		console.log('lived_at:');
+		if (person.aggregates['lived_at']) {
+			hadHome = true;
+			console.log(person.aggregates.lived_at.pos);
+			// go to the location
+			// find out who else lived there
+		}
+		console.log('died_in:');
+		if (person.aggregates['died_in']) {
+			hasDied = true;
+			console.log(person.aggregates.died_in.date);
+			// find out who else died in this date
+		}
+		console.log('died_at:');
+		if (person.aggregates['died_at']) {
+			hasDeathPlace = true;
+			console.log(person.aggregates.died_at.pos);
+			// find out who else died there
+		}
 	}
 
 	replyWithWelcomeMessage(scope) {

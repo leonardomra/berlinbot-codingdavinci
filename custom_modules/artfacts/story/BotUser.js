@@ -16,6 +16,10 @@ class BotUser {
 		self.userLocation.init(self);
 		self.personNumber = undefined;
 		self.peopleOptions = [];
+		self.isAllowedToReceiveSchoolCard = false;
+		self.isAllowedToReceiveInfoAboutFamily = false;
+		self.isAllowedToReceiveHomeAddress = false;
+		self.rememberPersonToDivert = undefined;
 	}
 
 	setPersonOption(number) {
