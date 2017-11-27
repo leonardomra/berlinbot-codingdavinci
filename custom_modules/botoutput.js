@@ -117,7 +117,7 @@ class BotOutput {
 				let d = new Date(msec);
 				reply += ', who was born in ' + d.getFullYear() + '.';
 			} else {
-				reply += '.'; 
+				reply += '.';
 			}
 			reply += ' Would you like to see the registration cards of when ' + pronom + ' was studying?';
 			user.isAllowedToReceiveSchoolCard = true;
@@ -128,7 +128,7 @@ class BotOutput {
 				let d = new Date(msec);
 				reply += ' born in ' + d.getFullYear() + '.';
 			} else {
-				reply += '.'; 
+				reply += '.';
 			}
 			user.isAllowedToReceiveSchoolCard = false;
 		}
