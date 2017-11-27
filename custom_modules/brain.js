@@ -111,6 +111,7 @@ class Brain {
 		self.telegraf.command('help', (scope) => {
 			return scope.reply('I will help you!')
 			.then(function() {
+
 				//scope.replyWithChatAction('typing');
 			});
 		});
@@ -129,8 +130,13 @@ class Brain {
 			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
 		});
 		self.telegraf.hears('Help! 🤔', scope => {
-			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
-			scope.reply('You need help! Here is what I can do for you...');
+			//self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
+			scope.reply('You need help! Here is what I can do for you...\n' +
+				'Please note, some of my features are available only if you share your live location (📎) with me.\n' +
+				'Is something wrong? Type /start to restart the application.\n' +
+				'Do you want to take a tour? Type /tour or use the menu.\n' +
+				'Do you want to read these hints? Type /help or use the menu.\n' +
+				'And last but not least, don\'t forget your headphones when you take a tour!');
 		});
 
 		// regular text --------------------------------------------------------------------------------
