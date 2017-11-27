@@ -7,15 +7,15 @@ const listOfPOIs = require('./../../../data/schools_coords');
 
 class UserLocation {
 
-	init(user) {
+	init(user, addresses) {
 		let self = this;
 		self.user = user;
 		self.latitude = undefined;
 		self.longitude = undefined;
 		self.advisedLocations = {};
 		self.toldLocations = {};
-		self.pd = new PoiDist(listOfPOIs);
-		self.pd.init(listOfPOIs, 0.3);
+		self.pd = new PoiDist();
+		self.pd.init(addresses, 0.3);
 	}
 
 	set location(loc) {

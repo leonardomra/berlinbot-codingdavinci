@@ -35,8 +35,17 @@ class Brain {
 		self.isLiveLocationActive = false;
 		self.locationReplyCounter = 0;
 		self.locationEmitter = new EventEmitter();
-		self.startTelegrafRouters();
+		self.allAddresses = {};
+		self.createListOfLocations();
 		//self.createListOfNames();
+	}
+
+	createListOfLocations() {
+		let self = this;
+		Node.getAllLocations(function(response) {
+			self.allAddresses = response;
+			self.startTelegrafRouters();
+		});
 	}
 
 	createListOfNames() {
@@ -54,8 +63,13 @@ class Brain {
 		self.telegraf.start((scope) => {
 			self.bot.users[scope.update.message.from.id] = new BotUser();
 			self.bot.users[scope.update.message.from.id].init(scope.update.message.from.id, scope.update.message.from.first_name);
+			self.bot.users[scope.update.message.from.id].setAddresses(self.allAddresses);
 			return self.out.replyWithWelcomeMessage(scope)
-				.then(info => null)
+				.then(info => {
+					setTimeout(() => {
+						self.out.replyWithWelcomeMessageContinuation(scope);
+					}, 2000);
+				})
 				.catch(error => console.log(error));
 		});
 
@@ -169,6 +183,7 @@ class Brain {
 			self.bot.users[message.from.id] = new BotUser();
 			user = self.bot.users[message.from.id];
 			user.init(message.from.id, message.from.first_name);
+			user.setAddresses(self.allAddresses);
 			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' did not exist.');
 		} else {
 			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' already exists.');

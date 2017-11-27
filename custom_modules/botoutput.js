@@ -416,6 +416,14 @@ class BotOutput {
 		return scope.reply('Hi ' + scope.update.message.from.first_name +'! Nice to see you around!\nLet me introduce myself...', aboutMenu);
 	}
 
+	replyWithWelcomeMessageContinuation(scope) {
+		let msg = '' +
+			'I\'m Marbles.\n' +
+			'I\'m happy that you are joining me in this adventure!\n'
+
+		scope.reply(msg);
+	}
+
 	replyWithNotification(scope, reply) {
 		scope.answerCbQuery(reply)
 		.then(function () {

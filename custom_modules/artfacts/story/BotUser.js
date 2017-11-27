@@ -13,13 +13,19 @@ class BotUser {
 		self.first_name = first_name;
 		self.id = id;
 		self.userLocation = new UserLocation();
-		self.userLocation.init(self);
 		self.personNumber = undefined;
 		self.peopleOptions = [];
 		self.isAllowedToReceiveSchoolCard = false;
 		self.isAllowedToReceiveInfoAboutFamily = false;
 		self.isAllowedToReceiveHomeAddress = false;
 		self.rememberPersonToDivert = undefined;
+		self.allAddresses = undefined;
+	}
+
+	setAddresses(addresses) {
+		let self = this;
+		self.allAddresses = addresses;
+		self.userLocation.init(self, self.allAddresses);
 	}
 
 	setPersonOption(number) {
