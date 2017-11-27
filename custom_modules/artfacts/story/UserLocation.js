@@ -15,6 +15,7 @@ class UserLocation {
 		self.advisedLocations = {};
 		self.toldLocations = {};
 		self.pd = new PoiDist();
+		//self.pd.init(listOfPOIs, 0.3);
 		self.pd.init(addresses, 0.3);
 	}
 
