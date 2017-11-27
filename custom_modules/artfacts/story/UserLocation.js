@@ -3,7 +3,7 @@
 /* jshint node: true */
 
 const PoiDist = require('./../../poidist');
-const listOfPOIs = require('./../../../data/schools_coords');
+//const listOfPOIs = require('./../../../data/schools_coords');
 
 class UserLocation {
 
