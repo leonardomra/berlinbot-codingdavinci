@@ -499,23 +499,51 @@ class BotOutput {
 
 	replyWithLocationOfStolperstein(reply, scope, user, message, telegraf, poi, allVictimsForAddresses) {
 		let self = this;
-		console.log(poi[0]);
-		//let vic = {};
-		//vic[poi[0]] = ['Leonardo'];
-		let victimsMsg = 'There are the victims, who lived at this address: \n\n';
+		let victimsMsg = 'There were victims who lived at this address: \n\n';
+		function handleVictims(victim) {
+			victimsMsg += '👉 ' + victim + '\n';
+		}
 		for (let key in allVictimsForAddresses) {
-			//console.log(allVictimsForAddresses[key]);
-			
 			if (key === poi[0]) {
-				console.log(key);
-				allVictimsForAddresses[key].forEach((victim) => {
-					victimsMsg += victim + '\n';
-				});
+				allVictimsForAddresses[key].forEach(handleVictims);
 			}
 		}
 		victimsMsg += '\nIf you would like to know more about a particular person, let me know 🔎';
 		self.replyWithSimpleMessage(scope, 'You are currently at ' + poi[0] + '.' + victimsMsg);
 		self.sendLocation(scope, telegraf, poi[1][0], poi[1][1], 'Stolperstein', poi[0]);
+	}
+
+	replyWithOtherLocationsOfStolperstein(eply, scope, user, message, advised, told, allVictimsForAddresses) {
+		let self = this;
+		let otherLocationsMessage;
+		function handleVictims(victim, index) {
+			otherLocationsMessage += victim + ', ';
+		}
+		if (Object.keys(advised).length > 0) {
+			let stringToCompare = otherLocationsMessage;
+			otherLocationsMessage = 'There are other important locations around you... \n';
+			for (let address in advised) {
+				if (advised[address][0] === false) {
+					let shouldInform = true;
+					for (let toldAddress in told) {
+						if (toldAddress === address) {
+							shouldInform = false;
+							break;
+						}
+					}
+					//if (shouldInform) {
+						otherLocationsMessage += '👉 On ' + address + ' lived ';
+						for (let key in allVictimsForAddresses) {
+							if (key === address) {
+								allVictimsForAddresses[key].forEach(handleVictims);
+							}
+						}
+						otherLocationsMessage = otherLocationsMessage.substring(0, otherLocationsMessage.length - 2) + '.';
+					//}
+				}
+			}
+			if (otherLocationsMessage !== stringToCompare) self.replyWithSimpleMessage(scope, otherLocationsMessage);
+		}
 	}
 }
 

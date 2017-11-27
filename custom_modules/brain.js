@@ -176,10 +176,13 @@ class Brain {
 		bug.msg('---------------------------------');
 		let user;
 		let message;
+		let _isLiveLocationActive;
 		if (scope['message']) {
 			message = scope.message;
+			_isLiveLocationActive = false;
 		} else if (scope['update']) {
 			message = scope.update.edited_message;
+			_isLiveLocationActive = true;
 		}
 		if (!self.bot.users[message.from.id]) {
 			self.bot.users[message.from.id] = new BotUser();
@@ -187,9 +190,11 @@ class Brain {
 			user.init(message.from.id, message.from.first_name);
 			user.setAddresses(self.allAddresses);
 			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' did not exist.');
+			user.isLiveLocationActive = _isLiveLocationActive;
 		} else {
 			bug.msg('The user ' + self.bot.users[message.from.id].first_name + ' already exists.');
 			user = self.bot.users[message.from.id];
+			user.isLiveLocationActive = _isLiveLocationActive;
 		}
 		switch (reply.intention) {
 			case 'Identify Help':
@@ -263,27 +268,19 @@ class Brain {
 					break;
 				}
 			}
-			if (shouldInform) {
+			//if (shouldInform) {
+				//self.allVictimsForAddresses = [];
+				//self.allVictimsForAddresses['Humboldtstr 116. Bremen'] = ['u1', 'u2'];
+				//self.allVictimsForAddresses['Humboldtstr 64. Bremen'] = ['u1', 'u2'];
 				self.out.replyWithLocationOfStolperstein(reply, scope, user, message, self.telegraf, poi, self.allVictimsForAddresses);
-			}
+			//}
 		});
-		let advised = user.userLocation.getAdvisedLocations();
-		if (Object.keys(advised).length > 0) {
-			let otherLocationsMessage = 'The other following address are around: \n';
-			let stringToCompare = otherLocationsMessage;
-			for (let address in advised) {
-				if (advised[address][0] === false) {
-					let shouldInform = true;
-					for (let toldAddress in told) {
-						if (toldAddress === address) {
-							shouldInform = false;
-							break;
-						}
-					}
-					if (shouldInform) otherLocationsMessage += address + '\n';
-				}
-			}
-			if (otherLocationsMessage !== stringToCompare) self.out.replyWithSimpleMessage(scope, otherLocationsMessage);
+
+		if(!user.isLiveLocationActive) {
+			let advised = user.userLocation.getAdvisedLocations();
+			setTimeout(() => {
+				self.out.replyWithOtherLocationsOfStolperstein(reply, scope, user, message, advised, told, self.allVictimsForAddresses);
+			}, 2000);
 		}
 	}
 
