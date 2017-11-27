@@ -13,7 +13,6 @@ const UserInput = require('./userinput');
 const Persons = require('./artfacts/neo/persons');
 const BotOutput = require('./botoutput');
 const BotUser = require('./artfacts/story/BotUser');
-const listOfPOIs = require('./../data/schools_coords');
 const PoiDist = require('./poidist');
 const EventEmitter = require('events');
 
