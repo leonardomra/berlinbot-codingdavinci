@@ -193,14 +193,17 @@ class Node {
 	//*******************************************/
 
 	static getAllLocations(responseCallback) {
-		let queryString = 'match (location:LOCATION) where location.instance = "Generic Address" return {address: location.pos,  gps: split(location.gps, ",")} as obj';
+		let queryString = 'match (location:LOCATION)-[:lived_at]-(person:PERSON) where location.instance = "Generic Address" WITH location, collect(person.name) AS people return {address: location.pos,  gps: split(location.gps, ","), victims: people} as obj';
 		let neo = new NeoConnect();
 		neo.init();
 		neo.match(queryString, function(response) {
-			let _response = {};
+			let locations = {};
+			let victims = {};
 			response.forEach(function(location) {
-				_response[location.obj.address] = location.obj.gps;
+				locations[location.obj.address] = location.obj.gps;
+				victims[location.obj.address] = location.obj.victims;
 			});
+			let _response = {locations: locations, victims: victims};
 			return responseCallback(_response);
 		});
 	}

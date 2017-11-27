@@ -82,16 +82,6 @@ class BotOutput {
 		return scope.reply('Please, let me know when you are ready to go on! 👇', yesNoMenu);
 	}
 
-/*
-	replyWithYesNoMenu(scope, user, yes, no) {
-		var yesNoMenu = Telegraf.Extra
-			.markdown()
-			.markup((m) => m.inlineKeyboard([
-				[m.callbackButton(yes, 'yes'), m.callbackButton(no, 'no')]
-			]).resize());
-		return scope.reply('Please, let me know when you are ready to go on! 👇', yesNoMenu);
-	}
-*/
 	replyWithStolpersteinYesNoMenu(scope, person) {
 		var yesNoMenu = Telegraf.Extra
 			.markdown()
@@ -410,9 +400,12 @@ class BotOutput {
 	replyWithWelcomeMessage(scope) {
 		const aboutMenu = Telegraf.Extra
 			.markdown()
-			.markup((m) => m.keyboard([
-				[m.callbackButton('Take a tour! 🚶'), m.callbackButton('Around me! 🗺️'), m.callbackButton('Help! 🤔')]
-			]).resize());
+			.markup((m) => m.keyboard(
+				[
+					[m.callbackButton('Take a tour! 🚶'), m.locationRequestButton('Around me! 🗺️'), m.callbackButton('Help! 🤔')]
+				]
+			)
+			.resize());
 		return scope.reply('Hi ' + scope.update.message.from.first_name +'! Nice to see you around!\nLet me introduce myself...', aboutMenu);
 	}
 
@@ -435,7 +428,6 @@ class BotOutput {
 
 	replyWithMenuTourMessage(scope, reply) {
 		let self = this;
-		//scope.replyWithChatAction('typing');
 		try {
 			const testMenu = Telegraf.Extra
 				.markdown()
@@ -456,6 +448,24 @@ class BotOutput {
 			bug.error(e);
 			scope.reply('The developer told me to tell you that in one of your projects there is no main actor');
 		}
+	}
+
+	replyWithLocationOfStolperstein(reply, scope, user, message, telegraf, poi, allVictimsForAddresses) {
+		let self = this;
+		//console.log(allVictimsForAddresses);
+		let vic = {};
+		//vic[poi[0]] = ['Leonardo'];
+		let victimsMsg = 'There are the victims, who lived at this address: \n\n';
+		for (let key in allVictimsForAddresses) {
+			if (key === poi[0]) {
+				allVictimsForAddresses[key].forEach((victim) => {
+					victimsMsg += victim + '\n';
+				});
+			}
+		}
+		victimsMsg += '\nIf you would like to know more about a particular person, let me know 🔎';
+		self.replyWithSimpleMessage(scope, 'You are currently at ' + poi[0] + '.' + victimsMsg);
+		self.sendLocation(scope, telegraf, poi[1][0], poi[1][1], 'Stolperstein', poi[0]);
 	}
 }
 

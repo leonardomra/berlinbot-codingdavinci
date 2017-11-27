@@ -36,6 +36,7 @@ class Brain {
 		self.locationReplyCounter = 0;
 		self.locationEmitter = new EventEmitter();
 		self.allAddresses = {};
+		self.allVictimsForAddresses = {};
 		self.createListOfLocations();
 		//self.createListOfNames();
 	}
@@ -43,7 +44,8 @@ class Brain {
 	createListOfLocations() {
 		let self = this;
 		Node.getAllLocations(function(response) {
-			self.allAddresses = response;
+			self.allAddresses = response.locations;
+			self.allVictimsForAddresses = response.victims;
 			self.startTelegrafRouters();
 		});
 	}
@@ -125,6 +127,9 @@ class Brain {
 			self.manageIntent({intention: 'Identify Tour', bot: 'I\'ll organize your tour. Just a second...'}, scope);
 		});
 		self.telegraf.hears('Around me! 🗺️', scope => {
+
+			console.log('REQUEST LOCATIONS')
+
 			self.manageIntent({intention: 'Identify Location', bot: 'I\'m gonna check what is around you. Just a second...'}, scope);
 		});
 		self.telegraf.hears('Help! 🤔', scope => {
@@ -257,8 +262,7 @@ class Brain {
 				}
 			}
 			if (shouldInform) {
-				self.out.replyWithSimpleMessage(scope, 'You are currently at ' + poi[0] + '. In this address...');
-				self.out.sendLocation(scope, self.telegraf, poi[1][0], poi[1][1], 'the address of someone', poi[0]);
+				self.out.replyWithLocationOfStolperstein(reply, scope, user, message, self.telegraf, poi, self.allVictimsForAddresses);
 			}
 		});
 		let advised = user.userLocation.getAdvisedLocations();
