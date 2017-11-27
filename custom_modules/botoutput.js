@@ -236,10 +236,10 @@ class BotOutput {
 						let msecE = Date.parse(dateE);
 						let dE = new Date(msecE);
 						reply += ' and ended in ' + dE.getFullYear() + '.';
-						if (person.reasonLeavingSchool !== 'unknown') {
+						if (person.reasonLeavingSchool === 'unknown') {
 							reply += ' The reason why ' + pronom.toLowerCase() + ' had to leave school is unknown.';
 						} else {
-							reply += pronom + ' left school, because ' + pronom.toLowerCase() + ' ' + person.reasonLeavingSchool.toLowerCase();
+							reply += ' ' + pronom + ' left school, because ' + pronom.toLowerCase() + ' ' + person.reasonLeavingSchool.toLowerCase();
 						}
 					}
 				}
@@ -410,11 +410,58 @@ class BotOutput {
 	}
 
 	replyWithWelcomeMessageContinuation(scope) {
-		let msg = '' +
-			'I\'m Marbles.\n' +
-			'I\'m happy that you are joining me in this adventure!\n'
 
-		scope.reply(msg);
+		function prepareMsg4() {
+			let msg = '' +
+				'If you need any help - please press the „Help Button“ or type in /help and send it to me. I hope I can answer your questions and make the most of your user experience!' +
+				'';
+				scope.replyWithChatAction('typing');
+				setTimeout(() => {
+					scope.reply(msg);
+				}, 3000);
+		}
+
+		function prepareMsg3() {
+			let msg = '' +
+				'I have 3 functions for you:' +
+				'\n\n' +
+				'1) Every time you pass by a certain location, I will give you information about a Jewish kid living here during the Nazi regime (1933-1945) or a person’s Stolperstein.' +
+				'\n\n' +
+				'2) You can ask me as well questions about a kid or type in a name that comes into your mind. I will see if there was a kid or a parent with that name and research if I have information about the person you are interested in.' +
+				'\n\n' +
+				'3) If you do want to take a predefined tour, you can simply press the „Tour Button“. I already instructed some of my friends to string their marbles to an exciting story!';
+				scope.replyWithChatAction('typing');
+				setTimeout(() => {
+					scope.reply(msg)
+						.then(prepareMsg4);
+				}, 3000);
+		}
+
+		function prepareMsg2() {
+			let msg = '' +
+				'I’m sure you heard a lot about the Nazi regime in Germany (1933-1945) and about the faith of many Jewish people. Often forgotten are the Jewish kids and their experience during this time in Germany. You surely know Anne Frank though - the girl who wrote a diary about her time hiding from the Nazis in Amsterdam and was eventually murdered by them. ' +
+				'\n\n' +
+				'But there were many many more kids and many many more stories (hiding, surviving, fleeing, deportation, demise, death). This kids and their stories are distributed all over Europe and the city of Berlin like precious marbles, connected to each other by the Jewish schools they went to.' +
+				'\n\n' +
+				'I will be by your side while you are wondering through Berlin and learn about our different marbles!';
+				scope.replyWithChatAction('typing');
+				setTimeout(() => {
+					scope.reply(msg)
+						.then(prepareMsg3);
+				}, 3000);
+		}
+
+
+		scope.replyWithChatAction('typing');
+		let photoUrl = 'http://insidetouristguides.com/botfiles/marblesposter.jpg';
+		scope.replyWithPhoto(photoUrl)
+			.then(() => {
+				let msg = '' +
+					'I\'m Marbles.\n' +
+					'I\'m happy that you are joining me in this adventure!\n';
+				scope.reply(msg)
+					.then(prepareMsg2);
+			});
 	}
 
 	replyWithNotification(scope, reply) {
