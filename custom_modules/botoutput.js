@@ -104,6 +104,7 @@ class BotOutput {
 
 	shortDescriptionIntro(scope, person, user, message) {
 		let self = this;
+		bug.artmsg(person.name);
 		self.showAvailability(scope, person);
 		let isKid = false;
 		let hasBornDate = false;
@@ -148,7 +149,7 @@ class BotOutput {
 	}
 
 	shortDescriptionShowSchoolCards(scope, person, user, message) {
-		console.log('shortDescriptionShowSchoolCards');
+		bug.artmsg('shortDescriptionShowSchoolCards');
 		let self = this;
 		user.isAllowedToReceiveSchoolCard = false;
 		scope.reply('There you are!');
@@ -158,7 +159,6 @@ class BotOutput {
 		.then(() => {
 			scope.replyWithPhoto(photoUrl_2)
 			.then(() => {
-				console.log('do something else...');
 				self.shortDescriptionParentsChild(scope, person, user, message);
 			})
 			.catch((e) => {
@@ -171,7 +171,7 @@ class BotOutput {
 	}
 
 	shortDescriptionParentsChild(scope, person, user, message) {
-		console.log('shortDescriptionParentsChild');
+		bug.artmsg('shortDescriptionParentsChild');
 		let self = this;
 		let isFather = false;
 		let isMother = false;
@@ -200,7 +200,7 @@ class BotOutput {
 
 
 	shortDescriptionDivertToOtherPerson(scope, person, user, message) {
-		console.log('shortDescriptionDivertToOtherPerson');
+		bug.artmsg('shortDescriptionDivertToOtherPerson');
 		let self = this;
 		if (user.rememberPersonToDivert) {
 			message.text = user.rememberPersonToDivert;
@@ -213,8 +213,8 @@ class BotOutput {
 		}
 	}
 
-	shortDescriptionSchool(scope, person, user, message) {
-		console.log('shortDescriptionSchool');
+	shortDescriptionSchool(scope, person, user, message) {  //Bad Request: message text is empty... why?
+		bug.artmsg('shortDescriptionSchool');
 		let self = this;
 		let isKid = false;
 		let isStudent = false;
@@ -259,13 +259,15 @@ class BotOutput {
 			scope.reply(reply)
 				.then(() => {
 					self.shortDescriptionHome(scope, person, user, message);
-				});
+				})
+				.catch((e) => {});
 		} else {
 			self.shortDescriptionHome(scope, person, user, message);
 		}
 	}
 
 	shortDescriptionHome(scope, person, user, message) {
+		bug.artmsg('shortDescriptionHome');
 		let self = this;
 		let hadHome = false;
 		let wasDeported = false;
@@ -307,19 +309,18 @@ class BotOutput {
 				}
 			}
 			reply += ' Would you like to visit the place where ' + person.name + ' lived?';
+			scope.reply(reply);
+		} else {
+			self.shortDescriptionEndMessage(scope, person, user, message);
 		}
-		scope.reply(reply);
 	}
 
 	shortDescriptionLocationHome(scope, person, user, message) {
-		console.log('shortDescriptionLocationHome');
+		bug.artmsg('shortDescriptionLocationHome');
 		let self = this;
 		let hadHome = false;
 		if (person.aggregates['lived_at']) hadHome = true;
-		console.log(hadHome)
-		console.log(person.aggregates['lived_at'])
 		if (hadHome) {
-			console.log(person.aggregates.lived_at)
 			let coords = person.aggregates.lived_at.gps.split(',');
 			scope.replyWithLocation(coords[0], coords[1])
 				.then(() => {
@@ -349,65 +350,60 @@ class BotOutput {
 		if (person.itsid !== 'unknown') {
 			isKid = true;
 		}
-		console.log('was_born_in:');
+		bug.artmsg('was_born_in:');
 		if (person.aggregates['was_born_in']) {
 			hasBornDate = true;
-			console.log(person.aggregates.was_born_in.date);
+			bug.artmsg(person.aggregates.was_born_in.date);
 		}
-		console.log('is_father_of:');
+		bug.artmsg('is_father_of:');
 		if (person.aggregates['is_father_of']) {
 			isFather = true;
-			console.log(person.aggregates.is_father_of.name);
+			bug.artmsg(person.aggregates.is_father_of.name);
 		}
-		console.log('is_mother_of:');
+		bug.artmsg('is_mother_of:');
 		if (person.aggregates['is_mother_of']) {
 			isMother = true;
-			console.log(person.aggregates.is_mother_of.name);
+			bug.artmsg(person.aggregates.is_mother_of.name);
 		}
-		console.log('is_child_of:');
+		bug.artmsg('is_child_of:');
 		if (person.aggregates['is_child_of']) {
 			isChild = true;
-			console.log(person.aggregates.is_child_of.name);
+			bug.artmsg(person.aggregates.is_child_of.name);
 		}
-		console.log('studied_at:');
+		bug.artmsg('studied_at:');
 		if (person.aggregates['studied_at']) {
 			isStudent = true;
-			console.log(person.aggregates.studied_at.name);
-			// find out who else studies here
+			bug.artmsg(person.aggregates.studied_at.name);
 		}
-		console.log('started_enrollment:');
+		bug.artmsg('started_enrollment:');
 		if (person.aggregates['started_enrollment']) {
 			wasEnrolled = true;
-			console.log(person.aggregates.started_enrollment.date);
+			bug.artmsg(person.aggregates.started_enrollment.date);
 		}
-		console.log('ended_enrollment:');
+		bug.artmsg('ended_enrollment:');
 		if (person.aggregates['ended_enrollment']) {
 			hasQuit = true;
-			console.log(person.aggregates.ended_enrollment.date);
+			bug.artmsg(person.aggregates.ended_enrollment.date);
 		}
-		console.log('was_deported_in:');
+		bug.artmsg('was_deported_in:');
 		if (person.aggregates['was_deported_in']){
 			wasDeported = true;
-			console.log(person.aggregates.was_deported_in.date);
+			bug.artmsg(person.aggregates.was_deported_in.date);
 		}
-		console.log('lived_at:');
+		bug.artmsg('lived_at:');
 		if (person.aggregates['lived_at']) {
 			hadHome = true;
-			console.log(person.aggregates.lived_at.pos);
-			// go to the location
-			// find out who else lived there
+			bug.artmsg(person.aggregates.lived_at.pos);
 		}
-		console.log('died_in:');
+		bug.artmsg('died_in:');
 		if (person.aggregates['died_in']) {
 			hasDied = true;
-			console.log(person.aggregates.died_in.date);
-			// find out who else died in this date
+			bug.artmsg(person.aggregates.died_in.date);
 		}
-		console.log('died_at:');
+		bug.artmsg('died_at:');
 		if (person.aggregates['died_at']) {
 			hasDeathPlace = true;
-			console.log(person.aggregates.died_at.pos);
-			// find out who else died there
+			bug.artmsg(person.aggregates.died_at.pos);
 		}
 	}
 

@@ -106,25 +106,6 @@ class Brain {
 			self.isStoryActive = false;
 			return scope.reply('You decided to quit the tour. See you next time!');
 		});
-		/*
-		self.telegraf.command('loc', (scope) => {
-			let lat = 53.0;
-			let lon = 8.8;
-			//self.telegraf.telegram.sendLocation(scope.update.message.chat.id, lat, lon, { live_period: 60 })
-			self.telegraf.telegram.sendLocation(scope.update.message.chat.id, lat, lon)
-				.then((message) => {
-					const timer = setInterval(() => {
-						lat += Math.random() * 0.001;
-						lon += Math.random() * 0.001;
-						self.telegraf.telegram.editMessageLiveLocation(lat, lon, message.chat.id, message.message_id)
-							.catch(() => clearInterval(timer));
-					}, 1000);
-				})
-				.catch((e) => {
-					console.log(e);
-				});
-		});
-		*/
 		// hears --------------------------------------------------------------------------------
 		self.telegraf.hears('Take a tour! 🚶', scope => {
 			self.manageIntent({intention: 'Identify Tour', bot: 'I\'ll organize your tour. Just a second...'}, scope);
@@ -146,14 +127,14 @@ class Brain {
 		});
 		// location --------------------------------------------------------------------------------
 		self.telegraf.on('location', (scope) => {
-			console.log('inside location');
+			bug.artmsg('inside location');
 			self.in.init(scope, scope.message, 'location');
 			self.in.analyseMessage(function(reply) {
 				self.manageIntent(reply, scope);
 			});
 		});
 		self.telegraf.on('edited_message', (scope) => {
-			console.log('inside edited_message');
+			bug.artmsg('inside edited_message');
 			self.in.init(scope, scope.update, 'location');
 			self.in.analyseMessage(function(reply) {
 				self.manageIntent(reply, scope);
@@ -175,6 +156,8 @@ class Brain {
 	manageIntent(reply, scope) {
 		let self = this;
 		bug.msg('You want me to process ------------>>> [' + reply.intention + ']');
+		bug.msg(reply);
+		bug.msg('---------------------------------');
 		let user;
 		let message;
 		if (scope['message']) {
@@ -247,26 +230,9 @@ class Brain {
 
 	identifyLocationIntent(reply, scope, user, message) {
 		let self = this;
-		/*
-		let user;
-		let message;
-		if (scope['message']) {
-			message = scope.message;
-		} else if (scope['update']) {
-			message = scope.update.edited_message;
-		}
-		if (!self.bot.users[message.from.id]) {
-			self.bot.users[message.from.id] = new BotUser();
-			user = self.bot.users[message.from.id];
-			user.init(message.from.id, message.from.first_name);
-		} else {
-			user = self.bot.users[message.from.id];
-		}
-		*/
 		user.userLocation.location = reply.loc;
 		let told = user.userLocation.getToldLocations();
 		let locations = user.userLocation.getPOIs();
-		console.log(told);
 		locations.near.forEach(function(poi) {
 			let shouldInform = true;
 			for (let toldAddress in told) {
@@ -310,8 +276,6 @@ class Brain {
 						if (Object.keys(user.peopleOptions).length === 0) {
 							self.out.replyWithSimpleMessage(scope, 'Sorry, could you please ask you question again?');
 						} else {
-
-							console.log('IM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HEREIM HERE')
 							try {
 								if (Object.keys(p.aggregates).length !== 0) {
 									user.peopleOptions = [];
