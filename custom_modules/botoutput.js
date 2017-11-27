@@ -453,11 +453,15 @@ class BotOutput {
 	replyWithLocationOfStolperstein(reply, scope, user, message, telegraf, poi, allVictimsForAddresses) {
 		let self = this;
 		//console.log(allVictimsForAddresses);
-		let vic = {};
+		console.log(poi[0]);
+		//let vic = {};
 		//vic[poi[0]] = ['Leonardo'];
 		let victimsMsg = 'There are the victims, who lived at this address: \n\n';
 		for (let key in allVictimsForAddresses) {
+			//console.log(allVictimsForAddresses[key]);
+			
 			if (key === poi[0]) {
+				console.log(key);
 				allVictimsForAddresses[key].forEach((victim) => {
 					victimsMsg += victim + '\n';
 				});

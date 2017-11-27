@@ -12,9 +12,9 @@ const telegraf = new Telegraf(API_TOKEN);
 const app = new App();
 
 const projectsToLoad = [
-	'59faeeb23dcf640fb556b5e5',
+	//'59faeeb23dcf640fb556b5e5',
 	//'5a17edfb09a3ae5bcadea2bb',
-	'5a19883d09a3ae5bcadea2bd'
+	//'5a19883d09a3ae5bcadea2bd'
 ];
 
 telegraf.telegram.setWebhook(`${URL}/bot${API_TOKEN}`);
